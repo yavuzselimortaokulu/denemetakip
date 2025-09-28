@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DENEME TAKİP PROGRAMI</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --light: #0f172a;
+            --dark: #f8fafc;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --panel-bg: #1e293b;
+            --header-bg: #0f172a;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 25px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .school-name {
+            font-size: 18px;
+            margin-top: 5px;
+            opacity: 0.9;
+            color: #93c5fd;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background-color: var(--panel-bg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            color: #cbd5e1;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .tab.active {
+            color: white;
+            background-color: var(--accent);
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+        
+        .panel {
+            display: none;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+            background-color: #0f172a;
+            color: var(--text);
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #0da271;
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: rgba(30, 64, 175, 0.1);
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .deneme-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 30px;
+        }
+        
+        .top-students {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .student-card {
+            flex: 1;
+            margin: 0 10px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .student-card:first-child {
+            margin-left: 0;
+        }
+        
+        .student-card:last-child {
+            margin-right: 0;
+        }
+        
+        .student-card .rank {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .student-card .name {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .student-card .score {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .favorite {
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .favorite:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+        
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .class-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        
+        .class-card .delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .student-list {
+            margin-top: 20px;
+        }
+        
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        
+        .student-item:hover {
+            background-color: rgba(30, 64, 175, 0.1);
+        }
+        
+        .student-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .student-name {
+            margin-right: 10px;
+            font-weight: 600;
+        }
+        
+        .student-number {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .student-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .delete-student {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .deneme-item {
+            cursor: pointer;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .deneme-item:hover {
+            background-color: rgba(30, 64, 175, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .deneme-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .deneme-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .deneme-date {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .teacher-welcome {
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+        
+        .teacher-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .pill-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: #0f172a;
+            border-radius: 12px;
+            padding: 5px;
+            width: fit-content;
+        }
+        
+        .pill {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+        }
+        
+        .pill.active {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .pill:hover:not(.active) {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        
+        .class-pick {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .class-pick.active {
+            outline: 3px solid rgba(16, 185, 129, 0.5);
+        }
+        
+        .class-name {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        
+        .del-float {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .deneme-detail {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: rgba(15, 23, 42, 0.5);
+        }
+        
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .ranking-table th, .ranking-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .ranking-table th {
+            background-color: rgba(30, 64, 175, 0.1);
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .ranking-table tr:hover {
+            background-color: rgba(30, 64, 175, 0.05);
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                flex: 1 0 50%;
+                text-align: center;
+            }
+            
+            .top-students {
+                flex-direction: column;
+            }
+            
+            .student-card {
+                margin: 10px 0;
+            }
+            
+            .class-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>DENEME TAKİP PROGRAMI</h1>
+            <div class="school-name">YAVUZ SELİM ORTAOKULU</div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="register">Öğrenci Kayıt</div>
+            <div class="tab" data-tab="student-login">Öğrenci Giriş</div>
+            <div class="tab" data-tab="parent-login">Veli Giriş</div>
+            <div class="tab" data-tab="teacher-login">Öğretmen Giriş</div>
+        </div>
+        
+        <div id="alert" class="alert"></div>
+        
+        <!-- Öğrenci Kayıt Paneli -->
+        <div id="register" class="panel active">
+            <h2>Öğrenci Kayıt</h2>
+            <div class="form-group">
+                <label for="fullName">Ad Soyad</label>
+                <input type="text" id="fullName" placeholder="Ad ve soyadınızı girin">
+            </div>
+            <div class="form-group">
+                <label for="classSelect">Sınıf</label>
+                <select id="classSelect">
+                    <option value="">Sınıf seçin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="studentNo">Okul Numarası</label>
+                <input type="text" id="studentNo" placeholder="Okul numaranızı girin">
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" placeholder="Şifre oluşturun">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Şifre Tekrar</label>
+                <input type="password" id="confirmPassword" placeholder="Şifreyi tekrar girin">
+            </div>
+            <button id="registerBtn" class="btn btn-block">Kayıt Ol</button>
+        </div>
+        
+        <!-- Öğrenci Giriş Paneli -->
+        <div id="student-login" class="panel">
+            <h2>Öğrenci Giriş</h2>
+            <div class="form-group">
+                <label for="loginStudentNo">Okul No</label>
+                <input type="text" id="loginStudentNo" placeholder="Öğrenci numaranızı girin">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Şifre</label>
+                <input type="password" id="loginPassword" placeholder="Şifrenizi girin">
+            </div>
+            <button id="studentLoginBtn" class="btn btn-block">Giriş Yap</button>
+        </div>
+        
+        <!-- Veli Giriş Paneli -->
+        <div id="parent-login" class="panel">
+            <h2>Veli Giriş</h2>
+            <div class="form-group">
+                <label for="parentName">Veli Adı-Soyadı</label>
+                <input type="text" id="parentName" placeholder="Adınızı ve soyadınızı girin">
+            </div>
+            <div class="form-group">
+                <label for="parentStudentNo">Öğrenci No</label>
+                <input type="text" id="parentStudentNo" placeholder="Öğrenci numarasını girin">
+            </div>
+            <div class="form-group">
+                <label for="parentPassword">Öğrenci Şifresi</label>
+                <input type="password" id="parentPassword" placeholder="Öğrenci şifresini girin">
+            </div>
+            <button id="parentLoginBtn" class="btn btn-block">Giriş Yap</button>
+        </div>
+        
+        <!-- Öğretmen Giriş Paneli -->
+        <div id="teacher-login" class="panel">
+            <h2>Öğretmen Giriş</h2>
+            <div class="form-group">
+                <label for="teacherName">Adı Soyadı</label>
+                <input type="text" id="teacherName" placeholder="Adınızı ve soyadınızı girin">
+            </div>
+            <div class="form-group">
+                <label for="teacherCode">Kod</label>
+                <input type="password" id="teacherCode" placeholder="Öğretmen kodunu girin">
+            </div>
+            <button id="teacherLoginBtn" class="btn btn-block">Giriş Yap</button>
+        </div>
+        
+        <!-- Öğrenci Paneli -->
+        <div id="student-panel" class="panel hidden">
+            <h2>Öğrenci Paneli</h2>
+            <div class="card">
+                <div class="card-title">Deneme Sonuçları Girişi</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ders</th>
+                            <th>Doğru</th>
+                            <th>Yanlış</th>
+                            <th>Boş</th>
+                            <th>Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Türkçe (20)</td>
+                            <td><input type="number" id="turkce-dogru" min="0" max="20" class="dogru-input"></td>
+                            <td><input type="number" id="turkce-yanlis" min="0" max="20" class="yanlis-input"></td>
+                            <td id="turkce-bos">0</td>
+                            <td id="turkce-net">0</td>
+                        </tr>
+                        <tr>
+                            <td>Sosyal Bilgiler (10)</td>
+                            <td><input type="number" id="sosyal-dogru" min="0" max="10" class="dogru-input"></td>
+                            <td><input type="number" id="sosyal-yanlis" min="0" max="10" class="yanlis-input"></td>
+                            <td id="sosyal-bos">0</td>
+                            <td id="sosyal-net">0</td>
+                        </tr>
+                        <tr>
+                            <td>Din Kültürü (10)</td>
+                            <td><input type="number" id="din-dogru" min="0" max="10" class="dogru-input"></td>
+                            <td><input type="number" id="din-yanlis" min="0" max="10" class="yanlis-input"></td>
+                            <td id="din-bos">0</td>
+                            <td id="din-net">0</td>
+                        </tr>
+                        <tr>
+                            <td>İngilizce (10)</td>
+                            <td><input type="number" id="ingilizce-dogru" min="0" max="10" class="dogru-input"></td>
+                            <td><input type="number" id="ingilizce-yanlis" min="0" max="10" class="yanlis-input"></td>
+                            <td id="ingilizce-bos">0</td>
+                            <td id="ingilizce-net">0</td>
+                        </tr>
+                        <tr>
+                            <td>Matematik (20)</td>
+                            <td><input type="number" id="matematik-dogru" min="0" max="20" class="dogru-input"></td>
+                            <td><input type="number" id="matematik-yanlis" min="0" max="20" class="yanlis-input"></td>
+                            <td id="matematik-bos">0</td>
+                            <td id="matematik-net">0</td>
+                        </tr>
+                        <tr>
+                            <td>Fen Bilimleri (20)</td>
+                            <td><input type="number" id="fen-dogru" min="0" max="20" class="dogru-input"></td>
+                            <td><input type="number" id="fen-yanlis" min="0" max="20" class="yanlis-input"></td>
+                            <td id="fen-bos">0</td>
+                            <td id="fen-net">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button id="saveDeneme" class="btn" style="margin-top: 15px;">Deneme Sonucunu Kaydet</button>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Geçmiş Denemeler</div>
+                <div id="deneme-list" class="deneme-list">
+                    <!-- Deneme listesi burada oluşturulacak -->
+                </div>
+                <div id="deneme-detail" class="deneme-detail" style="display: none;">
+                    <!-- Deneme detayları burada gösterilecek -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Gelişim Grafiği</div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+                <button id="exportPdf" class="btn" style="margin-top: 15px;">PDF Olarak Dışa Aktar</button>
+            </div>
+            
+            <button id="studentLogout" class="btn btn-block" style="margin-top: 20px;">Çıkış Yap</button>
+        </div>
+        
+        <!-- Veli Paneli -->
+        <div id="parent-panel" class="panel hidden">
+            <h2>Veli Paneli</h2>
+            <div class="card">
+                <div class="card-title">Öğrenci Denemeleri</div>
+                <div id="parent-deneme-list" class="deneme-list">
+                    <!-- Veli için deneme listesi burada oluşturulacak -->
+                </div>
+                <div id="parent-deneme-detail" class="deneme-detail" style="display: none;">
+                    <!-- Seçilen denemenin detayları burada gösterilecek -->
+                </div>
+            </div>
+            
+            <button id="parentLogout" class="btn btn-block" style="margin-top: 20px;">Çıkış Yap</button>
+        </div>
+        
+        <!-- Öğretmen Paneli -->
+        <div id="teacher-panel" class="panel hidden">
+            <h2>Öğretmen Paneli</h2>
+            
+            <div class="teacher-welcome">Hoş geldiniz, <span class="teacher-name" id="teacherNameDisplay">Emre Demirbaş</span></div>
+            
+            <!-- En Başarılı Öğrenciler -->
+            <div class="card">
+                <div class="card-title" id="top-students-title">En Başarılı Öğrenciler</div>
+                <div class="top-students" id="top-students">
+                    <!-- En başarılı öğrenciler burada gösterilecek -->
+                </div>
+            </div>
+            
+            <div class="pill-tabs">
+                <div class="pill active" data-section="classes">Sınıflar</div>
+                <div class="pill" data-section="favorites">Favorilerim</div>
+                <div class="pill" data-section="denemeler">Denemeler</div>
+            </div>
+            
+            <div id="classes-section">
+                <div class="card">
+                    <div class="card-title">Sınıf İşlemleri</div>
+                    <div class="form-group">
+                        <label for="newClassName">Yeni Sınıf Ekle</label>
+                        <div style="display: flex;">
+                            <input type="text" id="newClassName" placeholder="Sınıf adı (örn: 8/A)" style="flex: 1; margin-right: 10px;">
+                            <button id="addClassBtn" class="btn">Ekle</button>
+                        </div>
+                    </div>
+                    
+                    <div class="class-grid" id="class-list">
+                        <!-- Sınıf listesi burada oluşturulacak -->
+                    </div>
+                </div>
+                
+                <div class="card" id="class-students" style="display: none;">
+                    <div class="card-title">Öğrenciler</div>
+                    <div id="teacher-student-list" class="student-list">
+                        <!-- Öğrenci listesi burada oluşturulacak -->
+                    </div>
+                </div>
+                
+                <div class="card" id="student-detail" style="display: none;">
+                    <div class="card-title">Öğrenci Denemeleri</div>
+                    <div id="teacher-deneme-list" class="deneme-list">
+                        <!-- Öğrenci denemeleri burada gösterilecek -->
+                    </div>
+                    <div id="teacher-deneme-detail" class="deneme-detail" style="display: none;">
+                        <!-- Deneme detayları burada gösterilecek -->
+                    </div>
+                </div>
+            </div>
+            
+            <div id="favorites-section" style="display: none;">
+                <div class="card">
+                    <div class="card-title">Favori Öğrenciler</div>
+                    <div id="favorite-students" class="student-list">
+                        <!-- Favori öğrenciler burada gösterilecek -->
+                    </div>
+                </div>
+            </div>
+            
+            <div id="denemeler-section" style="display: none;">
+                <div class="card">
+                    <div class="card-title">Deneme Sıralamaları</div>
+                    <div id="ranking-list">
+                        <!-- Deneme sıralamaları burada gösterilecek -->
+                    </div>
+                </div>
+            </div>
+            
+            <button id="teacherLogout" class="btn btn-block" style="margin-top: 20px;">Çıkış Yap</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase konfigürasyonu
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-D-Jp8GDuoc2b-My7cOpSViRyrcAypX0",
+            authDomain: "kocluksistemi-69e89.firebaseapp.com",
+            databaseURL: "https://kocluksistemi-69e89-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "kocluksistemi-69e89",
+            storageBucket: "kocluksistemi-69e89.firebasestorage.app",
+            messagingSenderId: "1025155254767",
+            appId: "1:1025155254767:web:492d53b2d6f36d0ea88e1a",
+            measurementId: "G-PZMLQHZP2L"
+        };
+        
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Mevcut kullanıcı bilgileri
+        let currentUser = null;
+        let currentStudent = null;
+        let currentTeacher = null;
+        let currentParent = null;
+        let activeClassName = null;
+        let selectedStudentId = null;
+        
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            loadClassesToSelect();
+        });
+        
+        // Uygulamayı başlat
+        function initializeApp() {
+            // Tab geçişlerini ayarla
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Formları temizle
+                    clearForms();
+                    
+                    // Aktif tab'ı değiştir
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Aktif paneli değiştir
+                    const tabId = this.getAttribute('data-tab');
+                    document.querySelectorAll('.panel').forEach(panel => {
+                        panel.classList.remove('active');
+                        panel.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(tabId).classList.remove('hidden');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Öğretmen paneli sekmeleri
+            document.querySelectorAll('.pill').forEach(pill => {
+                pill.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    
+                    // Aktif sekme
+                    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Aktif bölüm
+                    document.getElementById('classes-section').style.display = 'none';
+                    document.getElementById('favorites-section').style.display = 'none';
+                    document.getElementById('denemeler-section').style.display = 'none';
+                    document.getElementById(`${section}-section`).style.display = 'block';
+                });
+            });
+        }
+        
+        // Formları temizle
+        function clearForms() {
+            // Öğrenci kayıt formu
+            document.getElementById('fullName').value = '';
+            document.getElementById('classSelect').value = '';
+            document.getElementById('studentNo').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // Giriş formları
+            document.getElementById('loginStudentNo').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('parentName').value = '';
+            document.getElementById('parentStudentNo').value = '';
+            document.getElementById('parentPassword').value = '';
+            document.getElementById('teacherName').value = '';
+            document.getElementById('teacherCode').value = '';
+            
+            // Deneme formu
+            document.querySelectorAll('.dogru-input, .yanlis-input').forEach(input => {
+                input.value = '';
+            });
+            calculateNet();
+        }
+        
+        // Event listener'ları ayarla
+        function setupEventListeners() {
+            // Öğrenci kayıt butonu
+            document.getElementById('registerBtn').addEventListener('click', registerStudent);
+            
+            // Öğrenci giriş butonu
+            document.getElementById('studentLoginBtn').addEventListener('click', studentLogin);
+            
+            // Veli giriş butonu
+            document.getElementById('parentLoginBtn').addEventListener('click', parentLogin);
+            
+            // Öğretmen giriş butonu
+            document.getElementById('teacherLoginBtn').addEventListener('click', teacherLogin);
+            
+            // Doğru ve yanlış input'larına event listener ekle
+            document.querySelectorAll('.dogru-input, .yanlis-input').forEach(input => {
+                input.addEventListener('input', calculateNet);
+            });
+            
+            // Deneme kaydet butonu
+            document.getElementById('saveDeneme').addEventListener('click', saveDeneme);
+            
+            // PDF export butonu
+            document.getElementById('exportPdf').addEventListener('click', exportToPdf);
+            
+            // Çıkış butonları
+            document.getElementById('studentLogout').addEventListener('click', logout);
+            document.getElementById('parentLogout').addEventListener('click', logout);
+            document.getElementById('teacherLogout').addEventListener('click', logout);
+            
+            // Sınıf ekle butonu
+            document.getElementById('addClassBtn').addEventListener('click', addClass);
+        }
+        
+        // Sınıfları select elementine yükle
+        function loadClassesToSelect() {
+            database.ref('classes').once('value').then(snapshot => {
+                const classes = snapshot.val() || {};
+                const classSelect = document.getElementById('classSelect');
+                classSelect.innerHTML = '<option value="">Sınıf seçin</option>';
+                
+                Object.keys(classes).forEach(key => {
+                    const className = classes[key].name;
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    classSelect.appendChild(option);
+                });
+            });
+        }
+        
+        // Ad soyad formatla (ilk harfler büyük, diğerleri küçük)
+        function formatName(name) {
+            return name.replace(/\w\S*/g, function(txt) {
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            });
+        }
+        
+        // Net hesapla
+        function calculateNet() {
+            const dersler = [
+                { id: 'turkce', total: 20 },
+                { id: 'sosyal', total: 10 },
+                { id: 'din', total: 10 },
+                { id: 'ingilizce', total: 10 },
+                { id: 'matematik', total: 20 },
+                { id: 'fen', total: 20 }
+            ];
+            
+            dersler.forEach(ders => {
+                const dogru = parseInt(document.getElementById(`${ders.id}-dogru`).value) || 0;
+                const yanlis = parseInt(document.getElementById(`${ders.id}-yanlis`).value) || 0;
+                
+                // Boş soru sayısını hesapla
+                const bos = ders.total - (dogru + yanlis);
+                document.getElementById(`${ders.id}-bos`).textContent = bos;
+                
+                // Net hesapla (3 yanlış 1 doğruyu götürür)
+                const net = dogru - (yanlis / 3);
+                document.getElementById(`${ders.id}-net`).textContent = net.toFixed(2);
+            });
+        }
+        
+        // LGS puanı hesapla
+        function calculateLGSPuan(netler) {
+            // Formül: Türkçe Net * 4.348 + Sosyal Net * 1.666 + Din Net * 1.899 + 
+            // İngilizce Net * 1.5075 + Matematik Net * 4.2538 + Fen Net * 4.1230
+            const turkceNet = parseFloat(netler.turkce) || 0;
+            const sosyalNet = parseFloat(netler.sosyal) || 0;
+            const dinNet = parseFloat(netler.din) || 0;
+            const ingilizceNet = parseFloat(netler.ingilizce) || 0;
+            const matematikNet = parseFloat(netler.matematik) || 0;
+            const fenNet = parseFloat(netler.fen) || 0;
+            
+            const lgsPuan = (turkceNet * 4.348) + 
+                           (sosyalNet * 1.666) + 
+                           (dinNet * 1.899) + 
+                           (ingilizceNet * 1.5075) + 
+                           (matematikNet * 4.2538) + 
+                           (fenNet * 4.1230);
+            
+            return lgsPuan.toFixed(2);
+        }
+        
+        // Öğrenci kayıt
+        function registerStudent() {
+            let fullName = document.getElementById('fullName').value.trim();
+            const studentNo = document.getElementById('studentNo').value.trim();
+            const className = document.getElementById('classSelect').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Ad soyad formatla
+            fullName = formatName(fullName);
+            
+            // Validasyon
+            if (!fullName || !studentNo || !className || !password) {
+                showAlert('Tüm alanları doldurunuz!', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert('Şifreler eşleşmiyor!', 'error');
+                return;
+            }
+            
+            // Öğrenci numarası kontrolü
+            database.ref('students').orderByChild('studentNo').equalTo(studentNo).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    showAlert('Bu öğrenci numarası zaten kayıtlı!', 'error');
+                } else {
+                    // Yeni öğrenci oluştur
+                    const newStudent = {
+                        fullName,
+                        studentNo,
+                        className,
+                        password,
+                        denemeler: {}
+                    };
+                    
+                    // Firebase'e kaydet
+                    const newStudentRef = database.ref('students').push();
+                    newStudent.id = newStudentRef.key;
+                    newStudentRef.set(newStudent)
+                        .then(() => {
+                            showAlert('Öğrenci başarıyla kaydedildi!', 'success');
+                            document.getElementById('register').reset();
+                            
+                            // Öğrenci giriş sekmesine geç
+                            document.querySelector('[data-tab="student-login"]').click();
+                        })
+                        .catch(error => {
+                            showAlert('Kayıt sırasında hata oluştu: ' + error.message, 'error');
+                        });
+                }
+            });
+        }
+        
+        // Öğrenci giriş
+        function studentLogin() {
+            const studentNo = document.getElementById('loginStudentNo').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            database.ref('students').orderByChild('studentNo').equalTo(studentNo).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const students = snapshot.val();
+                    let studentFound = null;
+                    
+                    Object.keys(students).forEach(key => {
+                        const student = students[key];
+                        if (student.password === password) {
+                            studentFound = { ...student, id: key };
+                        }
+                    });
+                    
+                    if (studentFound) {
+                        currentStudent = studentFound;
+                        showStudentPanel();
+                        showAlert('Başarıyla giriş yapıldı!', 'success');
+                    } else {
+                        showAlert('Öğrenci numarası veya şifre hatalı!', 'error');
+                    }
+                } else {
+                    showAlert('Öğrenci numarası veya şifre hatalı!', 'error');
+                }
+            });
+        }
+        
+        // Veli giriş
+        function parentLogin() {
+            let parentName = document.getElementById('parentName').value.trim();
+            const studentNo = document.getElementById('parentStudentNo').value.trim();
+            const password = document.getElementById('parentPassword').value;
+            
+            // Ad soyad formatla
+            parentName = formatName(parentName);
+            
+            database.ref('students').orderByChild('studentNo').equalTo(studentNo).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const students = snapshot.val();
+                    let studentFound = null;
+                    
+                    Object.keys(students).forEach(key => {
+                        const student = students[key];
+                        if (student.password === password) {
+                            studentFound = { ...student, id: key };
+                        }
+                    });
+                    
+                    if (studentFound && parentName) {
+                        currentParent = {
+                            name: parentName,
+                            student: studentFound
+                        };
+                        showParentPanel();
+                        showAlert('Başarıyla giriş yapıldı!', 'success');
+                    } else {
+                        showAlert('Bilgiler hatalı veya eksik!', 'error');
+                    }
+                } else {
+                    showAlert('Bilgiler hatalı veya eksik!', 'error');
+                }
+            });
+        }
+        
+        // Öğretmen giriş
+        function teacherLogin() {
+            let teacherName = document.getElementById('teacherName').value.trim();
+            const teacherCode = document.getElementById('teacherCode').value;
+            
+            // Ad soyad formatla
+            teacherName = formatName(teacherName);
+            
+            if (teacherName && teacherCode === '703501') {
+                currentTeacher = {
+                    name: teacherName
+                };
+                document.getElementById('teacherNameDisplay').textContent = teacherName;
+                showTeacherPanel();
+                showAlert('Başarıyla giriş yapıldı!', 'success');
+            } else {
+                showAlert('Öğretmen adı veya kod hatalı!', 'error');
+            }
+        }
+        
+        // Öğrenci panelini göster
+        function showStudentPanel() {
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+                panel.classList.add('hidden');
+            });
+            
+            document.getElementById('student-panel').classList.remove('hidden');
+            document.getElementById('student-panel').classList.add('active');
+            
+            // Öğrenci denemelerini yükle
+            loadStudentDenemeler();
+            
+            // Grafiği güncelle
+            updateProgressChart();
+        }
+        
+        // Veli panelini göster
+        function showParentPanel() {
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+                panel.classList.add('hidden');
+            });
+            
+            document.getElementById('parent-panel').classList.remove('hidden');
+            document.getElementById('parent-panel').classList.add('active');
+            
+            // Öğrenci denemelerini yükle
+            loadParentDenemeler();
+        }
+        
+        // Öğretmen panelini göster
+        function showTeacherPanel() {
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+                panel.classList.add('hidden');
+            });
+            
+            document.getElementById('teacher-panel').classList.remove('hidden');
+            document.getElementById('teacher-panel').classList.add('active');
+            
+            // En başarılı öğrencileri göster
+            updateTopStudents();
+            
+            // Sınıf listesini güncelle
+            updateClassList();
+            
+            // Öğrenci listesini güncelle
+            updateStudentList();
+            
+            // Favori öğrencileri güncelle
+            updateFavoriteStudents();
+            
+            // Deneme sıralamalarını güncelle
+            updateRankings();
+        }
+        
+        // Deneme kaydet
+        function saveDeneme() {
+            if (!currentStudent) return;
+            
+            const dersler = ['turkce', 'sosyal', 'din', 'ingilizce', 'matematik', 'fen'];
+            const denemeData = {};
+            const netler = {};
+            let toplamNet = 0;
+            
+            dersler.forEach(ders => {
+                const dogru = parseInt(document.getElementById(`${ders.id}-dogru`).value) || 0;
+                const yanlis = parseInt(document.getElementById(`${ders.id}-yanlis`).value) || 0;
+                const bos = parseInt(document.getElementById(`${ders.id}-bos`).textContent) || 0;
+                const net = parseFloat(document.getElementById(`${ders.id}-net`).textContent) || 0;
+                
+                denemeData[ders] = { dogru, yanlis, bos, net };
+                netler[ders] = net;
+                toplamNet += net;
+            });
+            
+            // LGS puanı hesapla
+            const lgsPuan = calculateLGSPuan(netler);
+            
+            const newDeneme = {
+                date: new Date().toLocaleDateString('tr-TR'),
+                timestamp: Date.now(),
+                data: denemeData,
+                toplamNet: toplamNet.toFixed(2),
+                lgsPuan: lgsPuan
+            };
+            
+            // Firebase'e deneme ekle
+            const denemeRef = database.ref(`students/${currentStudent.id}/denemeler`).push();
+            newDeneme.id = denemeRef.key;
+            newDeneme.denemeNo = getNextDenemeNo(currentStudent.id);
+            denemeRef.set(newDeneme)
+                .then(() => {
+                    showAlert('Deneme başarıyla kaydedildi!', 'success');
+                    
+                    // Formu temizle
+                    document.querySelectorAll('.dogru-input, .yanlis-input').forEach(input => {
+                        input.value = '';
+                    });
+                    calculateNet();
+                    
+                    // Deneme listesini ve grafiği güncelle
+                    loadStudentDenemeler();
+                    updateProgressChart();
+                    
+                    // Öğretmen panelindeki en başarılı öğrencileri güncelle
+                    updateTopStudents();
+                    
+                    // Deneme sıralamalarını güncelle
+                    updateRankings();
+                })
+                .catch(error => {
+                    showAlert('Deneme kaydedilirken hata oluştu: ' + error.message, 'error');
+                });
+        }
+        
+        // Bir sonraki deneme numarasını al
+        function getNextDenemeNo(studentId) {
+            // Bu fonksiyon öğrencinin mevcut deneme sayısına göre bir sonraki numarayı döndürür
+            // Gerçek uygulamada Firebase'den öğrencinin denemelerini saymak gerekir
+            // Şimdilik basit bir yaklaşım kullanıyoruz
+            return 1; // Gerçek uygulamada bu değer dinamik olarak hesaplanmalı
+        }
+        
+        // Öğrenci denemelerini yükle
+        function loadStudentDenemeler() {
+            const denemeList = document.getElementById('deneme-list');
+            denemeList.innerHTML = '';
+            
+            if (!currentStudent) return;
+            
+            database.ref(`students/${currentStudent.id}/denemeler`).once('value').then(snapshot => {
+                const denemeler = snapshot.val() || {};
+                
+                if (Object.keys(denemeler).length === 0) {
+                    denemeList.innerHTML = '<p>Henüz deneme kaydı bulunmuyor.</p>';
+                    return;
+                }
+                
+                // Denemeleri diziye çevir ve tarihe göre sırala (en yeni en üstte)
+                const denemeArray = Object.keys(denemeler).map(key => ({
+                    id: key,
+                    ...denemeler[key]
+                })).sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Deneme numaralarını güncelle (en yeni deneme 1 numara)
+                denemeArray.forEach((deneme, index) => {
+                    deneme.denemeNo = denemeArray.length - index;
+                });
+                
+                denemeArray.forEach((deneme) => {
+                    const denemeItem = document.createElement('div');
+                    denemeItem.className = 'deneme-item';
+                    denemeItem.dataset.denemeId = deneme.id;
+                    denemeItem.innerHTML = `
+                        <div class="deneme-header">
+                            <div class="deneme-title">Deneme ${deneme.denemeNo}</div>
+                            <div class="deneme-date">${deneme.date}</div>
+                        </div>
+                        <div>Toplam Net: ${deneme.toplamNet} | LGS Puanı: ${deneme.lgsPuan}</div>
+                    `;
+                    
+                    denemeItem.addEventListener('click', function() {
+                        showDenemeDetail(deneme, 'deneme-detail');
+                    });
+                    
+                    denemeList.appendChild(denemeItem);
+                });
+            });
+        }
+        
+        // Veli için denemeleri yükle
+        function loadParentDenemeler() {
+            const denemeList = document.getElementById('parent-deneme-list');
+            denemeList.innerHTML = '';
+            
+            if (!currentParent) return;
+            
+            database.ref(`students/${currentParent.student.id}/denemeler`).once('value').then(snapshot => {
+                const denemeler = snapshot.val() || {};
+                
+                if (Object.keys(denemeler).length === 0) {
+                    denemeList.innerHTML = '<p>Henüz deneme kaydı bulunmuyor.</p>';
+                    return;
+                }
+                
+                // Denemeleri diziye çevir ve tarihe göre sırala (en yeni en üstte)
+                const denemeArray = Object.keys(denemeler).map(key => ({
+                    id: key,
+                    ...denemeler[key]
+                })).sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Deneme numaralarını güncelle (en yeni deneme 1 numara)
+                denemeArray.forEach((deneme, index) => {
+                    deneme.denemeNo = denemeArray.length - index;
+                });
+                
+                denemeArray.forEach((deneme) => {
+                    const denemeItem = document.createElement('div');
+                    denemeItem.className = 'deneme-item';
+                    denemeItem.dataset.denemeId = deneme.id;
+                    denemeItem.innerHTML = `
+                        <div class="deneme-header">
+                            <div class="deneme-title">(${deneme.date}) Deneme ${deneme.denemeNo}</div>
+                            <div class="deneme-date">Toplam Net: ${deneme.toplamNet}</div>
+                        </div>
+                    `;
+                    
+                    denemeItem.addEventListener('click', function() {
+                        showDenemeDetail(deneme, 'parent-deneme-detail');
+                    });
+                    
+                    denemeList.appendChild(denemeItem);
+                });
+            });
+        }
+        
+        // Öğretmen için öğrenci denemelerini yükle
+        function loadTeacherStudentDenemeler(studentId) {
+            const denemeList = document.getElementById('teacher-deneme-list');
+            denemeList.innerHTML = '';
+            
+            database.ref(`students/${studentId}/denemeler`).once('value').then(snapshot => {
+                const denemeler = snapshot.val() || {};
+                
+                if (Object.keys(denemeler).length === 0) {
+                    denemeList.innerHTML = '<p>Henüz deneme kaydı bulunmuyor.</p>';
+                    return;
+                }
+                
+                // Denemeleri diziye çevir ve tarihe göre sırala (en yeni en üstte)
+                const denemeArray = Object.keys(denemeler).map(key => ({
+                    id: key,
+                    ...denemeler[key]
+                })).sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Deneme numaralarını güncelle (en yeni deneme 1 numara)
+                denemeArray.forEach((deneme, index) => {
+                    deneme.denemeNo = denemeArray.length - index;
+                });
+                
+                denemeArray.forEach((deneme) => {
+                    const denemeItem = document.createElement('div');
+                    denemeItem.className = 'deneme-item';
+                    denemeItem.dataset.denemeId = deneme.id;
+                    denemeItem.innerHTML = `
+                        <div class="deneme-header">
+                            <div class="deneme-title">(${deneme.date}) Deneme ${deneme.denemeNo}</div>
+                            <div class="deneme-date">Toplam Net: ${deneme.toplamNet}</div>
+                        </div>
+                    `;
+                    
+                    denemeItem.addEventListener('click', function() {
+                        showDenemeDetail(deneme, 'teacher-deneme-detail');
+                    });
+                    
+                    denemeList.appendChild(denemeItem);
+                });
+            });
+        }
+        
+        // Deneme detayını göster
+        function showDenemeDetail(deneme, targetId) {
+            const detailContainer = document.getElementById(targetId);
+            
+            let detailHTML = `
+                <h3>${deneme.date} - Deneme ${deneme.denemeNo} Detayları</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ders</th>
+                            <th>Doğru</th>
+                            <th>Yanlış</th>
+                            <th>Boş</th>
+                            <th>Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const dersAdlari = {
+                turkce: 'Türkçe',
+                sosyal: 'Sosyal Bilgiler',
+                din: 'Din Kültürü',
+                ingilizce: 'İngilizce',
+                matematik: 'Matematik',
+                fen: 'Fen Bilimleri'
+            };
+            
+            Object.keys(deneme.data).forEach(ders => {
+                const dersData = deneme.data[ders];
+                detailHTML += `
+                    <tr>
+                        <td>${dersAdlari[ders]}</td>
+                        <td>${dersData.dogru}</td>
+                        <td>${dersData.yanlis}</td>
+                        <td>${dersData.bos}</td>
+                        <td>${dersData.net.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            detailHTML += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px;">
+                    <strong>Toplam Net:</strong> ${deneme.toplamNet} <br>
+                    <strong>LGS Puanı:</strong> ${deneme.lgsPuan}
+                </div>
+            `;
+            
+            detailContainer.innerHTML = detailHTML;
+            detailContainer.style.display = 'block';
+        }
+        
+        // Gelişim grafiğini güncelle
+        function updateProgressChart() {
+            if (!currentStudent) return;
+            
+            database.ref(`students/${currentStudent.id}/denemeler`).once('value').then(snapshot => {
+                const denemeler = snapshot.val() || {};
+                
+                if (Object.keys(denemeler).length === 0) {
+                    return;
+                }
+                
+                const ctx = document.getElementById('progressChart').getContext('2d');
+                
+                // Denemeleri diziye çevir ve tarihe göre sırala (en eski en başta)
+                const denemeArray = Object.keys(denemeler).map(key => ({
+                    id: key,
+                    ...denemeler[key]
+                })).sort((a, b) => a.timestamp - b.timestamp);
+                
+                const labels = denemeArray.map((deneme, index) => `Deneme ${index + 1}`);
+                const netData = denemeArray.map(deneme => parseFloat(deneme.toplamNet));
+                const puanData = denemeArray.map(deneme => parseFloat(deneme.lgsPuan));
+                
+                // Eski chart varsa yok et
+                if (window.progressChart) {
+                    window.progressChart.destroy();
+                }
+                
+                window.progressChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Toplam Net',
+                                data: netData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.3,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'LGS Puanı',
+                                data: puanData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.3,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Toplam Net'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#e2e8f0'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'LGS Puanı'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    color: '#e2e8f0'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#e2e8f0'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0'
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        // En başarılı öğrencileri güncelle
+        function updateTopStudents() {
+            const topStudentsContainer = document.getElementById('top-students');
+            const topStudentsTitle = document.getElementById('top-students-title');
+            
+            database.ref('students').once('value').then(snapshot => {
+                const students = snapshot.val() || {};
+                
+                // Tüm öğrencilerin en son denemelerini bul
+                const studentsWithLatestDeneme = [];
+                
+                Object.keys(students).forEach(studentId => {
+                    const student = students[studentId];
+                    student.id = studentId;
+                    
+                    // En son denemeyi bul
+                    let latestDeneme = null;
+                    if (student.denemeler) {
+                        const denemeArray = Object.keys(student.denemeler).map(key => ({
+                            id: key,
+                            ...student.denemeler[key]
+                        }));
+                        
+                        if (denemeArray.length > 0) {
+                            latestDeneme = denemeArray.sort((a, b) => b.timestamp - a.timestamp)[0];
+                            latestDeneme.denemeNo = denemeArray.length;
+                        }
+                    }
+                    
+                    if (latestDeneme) {
+                        studentsWithLatestDeneme.push({
+                            ...student,
+                            latestDeneme
+                        });
+                    }
+                });
+                
+                // Öğrencileri LGS puanına göre sırala
+                const sortedStudents = studentsWithLatestDeneme
+                    .sort((a, b) => parseFloat(b.latestDeneme.lgsPuan) - parseFloat(a.latestDeneme.lgsPuan))
+                    .slice(0, 3);
+                
+                // Başlık güncelle
+                if (sortedStudents.length > 0) {
+                    const denemeNo = sortedStudents[0].latestDeneme.denemeNo || 1;
+                    topStudentsTitle.textContent = `${denemeNo}. Denemede En Başarılı ${sortedStudents.length} Öğrenci`;
+                } else {
+                    topStudentsTitle.textContent = 'Henüz deneme kaydı bulunmuyor';
+                }
+                
+                topStudentsContainer.innerHTML = '';
+                
+                sortedStudents.forEach((student, index) => {
+                    const studentCard = document.createElement('div');
+                    studentCard.className = 'student-card';
+                    
+                    const ranks = ['🥇', '🥈', '🥉'];
+                    
+                    studentCard.innerHTML = `
+                        <div class="rank">${ranks[index]}</div>
+                        <div class="name">${student.fullName}</div>
+                        <div class="score">${student.latestDeneme.lgsPuan} Puan</div>
+                    `;
+                    
+                    topStudentsContainer.appendChild(studentCard);
+                });
+            });
+        }
+        
+        // Sınıf listesini güncelle
+        function updateClassList() {
+            const classList = document.getElementById('class-list');
+            classList.innerHTML = '';
+            
+            database.ref('classes').once('value').then(snapshot => {
+                const classes = snapshot.val() || {};
+                
+                Object.keys(classes).forEach(key => {
+                    const className = classes[key].name;
+                    const classCard = document.createElement('div');
+                    classCard.className = 'class-card';
+                    classCard.innerHTML = `
+                        <div class="class-name">${className}</div>
+                        <button class="class-pick" data-class="${className}">Öğrencileri Gör</button>
+                        <button class="del-float" data-class="${className}" data-key="${key}">🗑️ Sil</button>
+                    `;
+                    
+                    classCard.querySelector('.class-pick').addEventListener('click', function() {
+                        selectClass(className);
+                    });
+                    
+                    classCard.querySelector('.del-float').addEventListener('click', function() {
+                        deleteClass(className, key);
+                    });
+                    
+                    classList.appendChild(classCard);
+                });
+            });
+        }
+        
+        // Sınıf seç
+        function selectClass(className) {
+            activeClassName = className;
+            
+            // Tüm sınıf butonlarını aktif durumdan çıkar
+            document.querySelectorAll('.class-pick').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Seçilen sınıfın butonunu aktif yap
+            document.querySelector(`.class-pick[data-class="${className}"]`).classList.add('active');
+            
+            // Öğrenci listesini göster
+            document.getElementById('class-students').style.display = 'block';
+            document.getElementById('student-detail').style.display = 'none';
+            
+            // Öğrenci listesini güncelle
+            updateStudentList();
+        }
+        
+        // Öğrenci listesini güncelle
+        function updateStudentList() {
+            const studentList = document.getElementById('teacher-student-list');
+            studentList.innerHTML = '';
+            
+            if (!activeClassName) return;
+            
+            database.ref('students').orderByChild('className').equalTo(activeClassName).once('value').then(snapshot => {
+                const students = snapshot.val() || {};
+                
+                if (Object.keys(students).length === 0) {
+                    studentList.innerHTML = `<p>${activeClassName} sınıfında öğrenci bulunmuyor.</p>`;
+                    return;
+                }
+                
+                Object.keys(students).forEach(studentId => {
+                    const student = students[studentId];
+                    const studentItem = document.createElement('div');
+                    studentItem.className = 'student-item';
+                    studentItem.dataset.studentId = studentId;
+                    
+                    // Favori kontrolü
+                    database.ref(`favorites/${currentTeacher.name}/${studentId}`).once('value').then(favSnapshot => {
+                        const isFavorite = favSnapshot.exists();
+                        
+                        studentItem.innerHTML = `
+                            <div class="student-info">
+                                <div class="student-name">${student.fullName}</div>
+                                <div class="student-number">${student.studentNo}</div>
+                            </div>
+                            <div class="student-actions">
+                                <span class="favorite" data-student-id="${studentId}">${isFavorite ? '★' : '☆'}</span>
+                                <button class="delete-student" data-student-id="${studentId}">Sil</button>
+                            </div>
+                        `;
+                        
+                        // Öğrenci tıklama
+                        studentItem.addEventListener('click', function(e) {
+                            if (!e.target.classList.contains('favorite') && !e.target.classList.contains('delete-student')) {
+                                selectedStudentId = studentId;
+                                document.getElementById('student-detail').style.display = 'block';
+                                document.getElementById('teacher-deneme-detail').style.display = 'none';
+                                loadTeacherStudentDenemeler(studentId);
+                            }
+                        });
+                        
+                        // Favori butonu
+                        studentItem.querySelector('.favorite').addEventListener('click', function() {
+                            toggleFavorite(studentId);
+                        });
+                        
+                        // Sil butonu
+                        studentItem.querySelector('.delete-student').addEventListener('click', function() {
+                            deleteStudent(studentId);
+                        });
+                    });
+                    
+                    studentList.appendChild(studentItem);
+                });
+            });
+        }
+        
+        // Favori öğrencileri güncelle
+        function updateFavoriteStudents() {
+            const favoriteContainer = document.getElementById('favorite-students');
+            favoriteContainer.innerHTML = '';
+            
+            if (!currentTeacher) return;
+            
+            database.ref(`favorites/${currentTeacher.name}`).once('value').then(snapshot => {
+                const favorites = snapshot.val() || {};
+                
+                if (Object.keys(favorites).length === 0) {
+                    favoriteContainer.innerHTML = '<p>Henüz favori öğrenci eklenmemiş.</p>';
+                    return;
+                }
+                
+                // Favori öğrencileri al
+                const favoriteStudentIds = Object.keys(favorites);
+                
+                database.ref('students').once('value').then(studentsSnapshot => {
+                    const students = studentsSnapshot.val() || {};
+                    const favoriteStudents = [];
+                    
+                    favoriteStudentIds.forEach(studentId => {
+                        if (students[studentId]) {
+                            favoriteStudents.push({
+                                id: studentId,
+                                ...students[studentId]
+                            });
+                        }
+                    });
+                    
+                    favoriteStudents.forEach(student => {
+                        const studentItem = document.createElement('div');
+                        studentItem.className = 'student-item';
+                        studentItem.dataset.studentId = student.id;
+                        
+                        studentItem.innerHTML = `
+                            <div class="student-info">
+                                <div class="student-name">${student.fullName}</div>
+                                <div class="student-number">${student.studentNo} - ${student.className}</div>
+                            </div>
+                            <div class="student-actions">
+                                <span class="favorite" data-student-id="${student.id}">★</span>
+                            </div>
+                        `;
+                        
+                        // Öğrenci tıklama
+                        studentItem.addEventListener('click', function(e) {
+                            if (!e.target.classList.contains('favorite')) {
+                                selectedStudentId = student.id;
+                                document.getElementById('student-detail').style.display = 'block';
+                                document.getElementById('teacher-deneme-detail').style.display = 'none';
+                                loadTeacherStudentDenemeler(student.id);
+                            }
+                        });
+                        
+                        // Favoriden çıkarma butonu
+                        studentItem.querySelector('.favorite').addEventListener('click', function() {
+                            toggleFavorite(student.id);
+                        });
+                        
+                        favoriteContainer.appendChild(studentItem);
+                    });
+                });
+            });
+        }
+        
+        // Deneme sıralamalarını güncelle
+        function updateRankings() {
+            const rankingList = document.getElementById('ranking-list');
+            rankingList.innerHTML = '';
+            
+            database.ref('students').once('value').then(snapshot => {
+                const students = snapshot.val() || {};
+                
+                // Tüm öğrencilerin en son denemelerini bul
+                const studentsWithLatestDeneme = [];
+                
+                Object.keys(students).forEach(studentId => {
+                    const student = students[studentId];
+                    student.id = studentId;
+                    
+                    // En son denemeyi bul
+                    let latestDeneme = null;
+                    if (student.denemeler) {
+                        const denemeArray = Object.keys(student.denemeler).map(key => ({
+                            id: key,
+                            ...student.denemeler[key]
+                        }));
+                        
+                        if (denemeArray.length > 0) {
+                            latestDeneme = denemeArray.sort((a, b) => b.timestamp - a.timestamp)[0];
+                            latestDeneme.denemeNo = denemeArray.length;
+                        }
+                    }
+                    
+                    if (latestDeneme) {
+                        studentsWithLatestDeneme.push({
+                            ...student,
+                            latestDeneme
+                        });
+                    }
+                });
+                
+                // Öğrencileri LGS puanına göre sırala
+                const sortedStudents = studentsWithLatestDeneme
+                    .sort((a, b) => parseFloat(b.latestDeneme.lgsPuan) - parseFloat(a.latestDeneme.lgsPuan));
+                
+                if (sortedStudents.length === 0) {
+                    rankingList.innerHTML = '<p>Henüz deneme kaydı bulunmuyor.</p>';
+                    return;
+                }
+                
+                let rankingHTML = `
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th>Sıra</th>
+                                <th>Öğrenci</th>
+                                <th>Sınıf</th>
+                                <th>Deneme No</th>
+                                <th>Toplam Net</th>
+                                <th>LGS Puanı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                sortedStudents.forEach((student, index) => {
+                    rankingHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${student.fullName}</td>
+                            <td>${student.className}</td>
+                            <td>${student.latestDeneme.denemeNo}</td>
+                            <td>${student.latestDeneme.toplamNet}</td>
+                            <td>${student.latestDeneme.lgsPuan}</td>
+                        </tr>
+                    `;
+                });
+                
+                rankingHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                rankingList.innerHTML = rankingHTML;
+            });
+        }
+        
+        // Sınıf ekle
+        function addClass() {
+            const className = document.getElementById('newClassName').value.trim();
+            
+            if (!className) {
+                showAlert('Sınıf adı giriniz!', 'error');
+                return;
+            }
+            
+            // Sınıf kontrolü
+            database.ref('classes').orderByChild('name').equalTo(className).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    showAlert('Bu sınıf zaten mevcut!', 'error');
+                } else {
+                    // Sınıfı Firebase'e ekle
+                    database.ref('classes').push({ name: className })
+                        .then(() => {
+                            showAlert('Sınıf başarıyla eklendi!', 'success');
+                            document.getElementById('newClassName').value = '';
+                            
+                            // Sınıf listesini ve select'i güncelle
+                            updateClassList();
+                            loadClassesToSelect();
+                        })
+                        .catch(error => {
+                            showAlert('Sınıf eklenirken hata oluştu: ' + error.message, 'error');
+                        });
+                }
+            });
+        }
+        
+        // Sınıf sil
+        function deleteClass(className, key) {
+            if (!confirm(`${className} sınıfını silmek istediğinizden emin misiniz?`)) {
+                return;
+            }
+            
+            // Bu sınıfta öğrenci var mı kontrol et
+            database.ref('students').orderByChild('className').equalTo(className).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    showAlert('Bu sınıfta öğrenci bulunuyor. Önce öğrencileri silin!', 'error');
+                } else {
+                    // Sınıfı Firebase'den sil
+                    database.ref(`classes/${key}`).remove()
+                        .then(() => {
+                            showAlert('Sınıf başarıyla silindi!', 'success');
+                            
+                            // Sınıf listesini ve select'i güncelle
+                            updateClassList();
+                            loadClassesToSelect();
+                        })
+                        .catch(error => {
+                            showAlert('Sınıf silinirken hata oluştu: ' + error.message, 'error');
+                        });
+                }
+            });
+        }
+        
+        // Öğrenci sil
+        function deleteStudent(studentId) {
+            database.ref(`students/${studentId}`).once('value').then(snapshot => {
+                const student = snapshot.val();
+                
+                if (!student) return;
+                
+                if (!confirm(`${student.fullName} öğrencisini silmek istediğinizden emin misiniz?`)) {
+                    return;
+                }
+                
+                // Öğrenciyi Firebase'den sil
+                database.ref(`students/${studentId}`).remove()
+                    .then(() => {
+                        showAlert('Öğrenci başarıyla silindi!', 'success');
+                        
+                        // Tüm öğretmenlerin favorilerinden bu öğrenciyi sil
+                        database.ref('favorites').once('value').then(favSnapshot => {
+                            const favorites = favSnapshot.val() || {};
+                            const updates = {};
+                            
+                            Object.keys(favorites).forEach(teacherName => {
+                                if (favorites[teacherName][studentId]) {
+                                    updates[`favorites/${teacherName}/${studentId}`] = null;
+                                }
+                            });
+                            
+                            if (Object.keys(updates).length > 0) {
+                                database.ref().update(updates);
+                            }
+                        });
+                        
+                        // Listeleri güncelle
+                        updateStudentList();
+                        updateFavoriteStudents();
+                        updateTopStudents();
+                        updateRankings();
+                    })
+                    .catch(error => {
+                        showAlert('Öğrenci silinirken hata oluştu: ' + error.message, 'error');
+                    });
+            });
+        }
+        
+        // Favoriye ekle/çıkar
+        function toggleFavorite(studentId) {
+            if (!currentTeacher) return;
+            
+            const favoriteRef = database.ref(`favorites/${currentTeacher.name}/${studentId}`);
+            
+            favoriteRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    // Favoriden çıkar
+                    favoriteRef.remove()
+                        .then(() => {
+                            // Listeleri güncelle
+                            updateStudentList();
+                            updateFavoriteStudents();
+                        })
+                        .catch(error => {
+                            showAlert('Favoriden çıkarılırken hata oluştu: ' + error.message, 'error');
+                        });
+                } else {
+                    // Favoriye ekle
+                    favoriteRef.set(true)
+                        .then(() => {
+                            // Listeleri güncelle
+                            updateStudentList();
+                            updateFavoriteStudents();
+                        })
+                        .catch(error => {
+                            showAlert('Favoriye eklenirken hata oluştu: ' + error.message, 'error');
+                        });
+                }
+            });
+        }
+        
+        // PDF olarak dışa aktar
+        function exportToPdf() {
+            // Basit bir PDF oluşturma simülasyonu
+            // Gerçek uygulamada jsPDF kütüphanesi kullanılmalı
+            showAlert('PDF dışa aktarma işlemi başlatıldı!', 'success');
+            
+            // Geçici olarak yeni pencerede grafiği göster
+            const chartCanvas = document.getElementById('progressChart');
+            const dataURL = chartCanvas.toDataURL('image/png');
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Öğrenci Gelişim Raporu</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { color: #1e40af; }
+                            .info { margin-bottom: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Öğrenci Gelişim Raporu</h1>
+                        <div class="info">
+                            <p><strong>Öğrenci:</strong> ${currentStudent.fullName}</p>
+                            <p><strong>Sınıf:</strong> ${currentStudent.className}</p>
+                            <p><strong>Öğrenci No:</strong> ${currentStudent.studentNo}</p>
+                        </div>
+                        <img src="${dataURL}" style="max-width: 100%;">
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+        
+        // Çıkış yap
+        function logout() {
+            currentUser = null;
+            currentStudent = null;
+            currentTeacher = null;
+            currentParent = null;
+            activeClassName = null;
+            selectedStudentId = null;
+            
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+                panel.classList.add('hidden');
+            });
+            
+            document.getElementById('register').classList.add('active');
+            document.getElementById('register').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector('[data-tab="register"]').classList.add('active');
+            
+            // Formları temizle
+            clearForms();
+            
+            showAlert('Başarıyla çıkış yapıldı!', 'success');
+        }
+        
+        // Alert göster
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
