@@ -722,47 +722,57 @@ button.exitSmall .label{line-height:1}
 }
 </style>
 
-<style id="mobile-fixes-2025-10">
-/* === MOBILE/PORTRAIT OPTIMIZATION PACK — 2025-10-06 === */
-:root { --tap-min: 44px; }
-
-/* Make all media responsive by default */
-img, svg, canvas, video { max-width: 100%; height: auto; }
-img { display: block; }
-canvas { display:block; width:100% !important; height:auto !important; }
-
-/* Tables: horizontal scroll on small screens */
-@media (max-width: 768px) {
-  .container { padding: 16px; }
-  .classGrid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-  .tabs, .pillTabs { flex-wrap: wrap; position: sticky; top: 0; z-index: 30; }
-  table { display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; }
-  th, td { white-space:nowrap; }
+<style id="calendar-visibility-fixes-2025-10">
+/* === CALENDAR VISIBILITY FIXES — Windows & Android — 2025-10-06 === */
+:root{
+  --cal-dot-size: 8px;
+  --cal-dot-color: #0ea5e9;
+  --cal-dot-color-dark: #38bdf8;
+  --cal-text-color: #0f172a;
+  --cal-text-color-dark: #e5e7eb;
 }
+@media (prefers-contrast: more) { :root { --cal-dot-size: 10px; } }
 
-@media (max-width: 560px) {
-  .row { flex-wrap: wrap; }
-  .studentItem.hasDel { padding-right:56px; }
-  .delFloat, .delStuFloat, .targetFloat { width: var(--tap-min); height: var(--tap-min); }
-}
-
-/* Portrait (dikey) adjustments */
-@media (orientation: portrait) {
-  body { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
-  #teacherStudentDetail.asModal { max-height: 86vh; }
-}
-
-/* Icon visibility fix (iOS Safari & some Android WebViews) */
-.delFloat img.trashIcon, .delStuFloat img.trashIcon {
-  width: 22px !important; height: 22px !important;
-  display: block; image-rendering: auto;
-  filter: none !important; -webkit-filter: none !important;
+.cal-dot, .event-dot, .day-dot, [data-dot],
+.fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot {
+  width: var(--cal-dot-size);
+  height: var(--cal-dot-size);
+  min-width: var(--cal-dot-size);
+  min-height: var(--cal-dot-size);
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 9999px;
+  background: var(--cal-dot-color);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
   opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  overflow: visible;
 }
-.delFloat, .delStuFloat { z-index: 5; }
 
-/* Ensure role icons scale nicely */
-.roleIcon svg { width: 100%; height: 100%; display:block; }
+.cal-dot::before, .event-dot::before, .day-dot::before, [data-dot]::before,
+.fc .fc-daygrid-dot::before, .fc .fc-daygrid-event-dot::before, .fc .fc-event-dot::before {
+  content: "" !important;
+}
+
+.calendar, .fc, .calendar *,
+.fc-theme-standard .fc-list, .fc-daygrid-day { color: var(--cal-text-color); }
+@media (prefers-color-scheme: dark){
+  .calendar, .fc, .calendar *, .fc-theme-standard .fc-list, .fc-daygrid-day {
+    color: var(--cal-text-color-dark);
+  }
+  .cal-dot, .event-dot, .day-dot, [data-dot],
+  .fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot {
+    background: var(--cal-dot-color-dark);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08);
+  }
+}
+
+.fc .fc-daygrid-event-harness, .fc .fc-daygrid-event { overflow: visible !important; }
+
+@media (pointer: coarse){
+  .fc .fc-daygrid-event, .calendar .event { min-height: 36px; }
+}
 </style>
 
 </head>
@@ -3093,32 +3103,60 @@ body[data-role="parent"] #studentTab-entry .student-toolbar { margin-bottom: 8px
 })();
 </script>
 
-<script id="mobile-fixes-2025-10-js">
+<script id="calendar-visibility-fixes-2025-10-js">
 (function(){
-  function enhanceImages(){
-    document.querySelectorAll('img').forEach(function(img){
-      if(!img.getAttribute('loading')) img.setAttribute('loading','lazy');
-      img.setAttribute('decoding','async');
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
+  function scaleCanvasForDPR(c){
+    try{
+      if (c.dataset.skipDpr) return;
+      if (c._chart || c._chartjs || c.chart || c.__chartist__) return;
+      var rect = c.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      var ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+      var w = Math.round(rect.width);
+      var h = Math.round(rect.height);
+      if (c.width !== w * ratio || c.height !== h * ratio){
+        c.width = w * ratio;
+        c.height = h * ratio;
+        var ctx = c.getContext('2d');
+        if (ctx && ctx.setTransform) ctx.setTransform(ratio,0,0,ratio,0,0);
+      }
+    }catch(e){}
+  }
+
+  function normalizeDots(){
+    var candidates = Array.from(document.querySelectorAll(
+      '.cal-dot, .event-dot, .day-dot, [data-dot], .fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot'
+    ));
+    candidates.forEach(function(el){
+      var t = (el.textContent || '').trim();
+      if (t === '•' || t === '●' || t === '·' || t === '') {
+        el.textContent = '';
+        el.setAttribute('aria-hidden','true');
+        var s = getComputedStyle(el);
+        if (parseFloat(s.width) < 4 || parseFloat(s.height) < 4){
+          el.style.width = 'var(--cal-dot-size)';
+          el.style.height = 'var(--cal-dot-size)';
+          el.style.display = 'inline-block';
+        }
+      }
     });
   }
-  function fixCanvases(){
-    try{
-      var list = Array.from(document.querySelectorAll('canvas'));
-      list.forEach(function(c){ c.style.width='100%'; c.style.height='auto'; });
-      if(window.stuWeekChart && typeof stuWeekChart.resize==='function') stuWeekChart.resize();
-      if(window.stuMonthChart && typeof stuMonthChart.resize==='function') stuMonthChart.resize();
-      if(window.weekChart && typeof weekChart.resize==='function') weekChart.resize();
-      if(window._exportChart && typeof _exportChart.resize==='function') _exportChart.resize();
-    }catch(_){}
+
+  function unclipEvents(){
+    document.querySelectorAll('.fc .fc-daygrid-day-frame, .calendar .day').forEach(function(n){
+      if (getComputedStyle(n).overflow === 'hidden') n.style.overflow = 'visible';
+    });
   }
-  document.addEventListener('DOMContentLoaded', function(){
-    enhanceImages();
-    fixCanvases();
-  });
-  window.addEventListener('resize', fixCanvases, { passive: true });
-  window.addEventListener('orientationchange', fixCanvases);
+
+  function applyFixes(){
+    Array.from(document.querySelectorAll('canvas')).forEach(scaleCanvasForDPR);
+    normalizeDots();
+    unclipEvents();
+  }
+
+  document.addEventListener('DOMContentLoaded', applyFixes);
+  window.addEventListener('resize', applyFixes, { passive: true });
+  window.addEventListener('orientationchange', applyFixes);
 })();
 </script>
 
