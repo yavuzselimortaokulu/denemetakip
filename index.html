@@ -722,54 +722,49 @@ button.exitSmall .label{line-height:1}
 }
 </style>
 
-<!-- === STUDENT ENTRY MOBILE: EDGE-TO-EDGE ROWS === -->
-<style>
-@media (max-width: 600px){
-  /* .list has padding: 12px; cancel it for lesson rows so content touches card edges */
-  #studentTab-entry .lessonRow.dense{
-    margin-left: -12px !important;
-    margin-right: -12px !important;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
+<style id="mobile-fixes-2025-10">
+/* === MOBILE/PORTRAIT OPTIMIZATION PACK — 2025-10-06 === */
+:root { --tap-min: 44px; }
 
-  /* Controls stacked as two full-width bars */
-  #studentTab-entry .lessonRow.dense .lessonControls{
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column;
-    gap: 10px;
-    margin-left: 0 !important;
-  }
-  #studentTab-entry .lessonRow.dense .countWrap,
-  #studentTab-entry .lessonRow.dense .goalWrap{
-    width: 100% !important;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* - [input] +  /  🎯 [goal] */
-    min-width: 0;
-  }
+/* Make all media responsive by default */
+img, svg, canvas, video { max-width: 100%; height: auto; }
+img { display: block; }
+canvas { display:block; width:100% !important; height:auto !important; }
 
-  /* Buttons and inputs scale but never overflow */
-  #studentTab-entry .lessonRow.dense .numBtn{ width: 42px; height: 42px; flex: 0 0 42px; }
-  #studentTab-entry .lessonRow.dense input[type="number"]{
-    flex: 1 1 auto; min-width: 0;
-    width: auto !important;
-    min-height: 42px; font-size: 16px;
-    text-align: center;
-  }
-  #studentTab-entry .lessonRow.dense .goalInput{
-    flex: 0 0 auto;
-    width: clamp(56px, 24vw, 100px) !important;
-    min-height: 42px; font-size: 16px;
-    text-align: center;
-  }
-
-  /* Optional: Slightly reduce inner card radius so bars look seamless with edges */
-  #studentTab-entry .lessonRow.dense{ border-radius: 14px; }
+/* Tables: horizontal scroll on small screens */
+@media (max-width: 768px) {
+  .container { padding: 16px; }
+  .classGrid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .tabs, .pillTabs { flex-wrap: wrap; position: sticky; top: 0; z-index: 30; }
+  table { display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; }
+  th, td { white-space:nowrap; }
 }
+
+@media (max-width: 560px) {
+  .row { flex-wrap: wrap; }
+  .studentItem.hasDel { padding-right:56px; }
+  .delFloat, .delStuFloat, .targetFloat { width: var(--tap-min); height: var(--tap-min); }
+}
+
+/* Portrait (dikey) adjustments */
+@media (orientation: portrait) {
+  body { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+  #teacherStudentDetail.asModal { max-height: 86vh; }
+}
+
+/* Icon visibility fix (iOS Safari & some Android WebViews) */
+.delFloat img.trashIcon, .delStuFloat img.trashIcon {
+  width: 22px !important; height: 22px !important;
+  display: block; image-rendering: auto;
+  filter: none !important; -webkit-filter: none !important;
+  opacity: 1 !important;
+}
+.delFloat, .delStuFloat { z-index: 5; }
+
+/* Ensure role icons scale nicely */
+.roleIcon svg { width: 100%; height: 100%; display:block; }
 </style>
-<!-- === /STUDENT ENTRY MOBILE: EDGE-TO-EDGE ROWS === -->
+
 </head>
 <style>
 /* ===== Ders Hedefleri (Goals Page) — Modern görünüm ===== */
@@ -3097,5 +3092,35 @@ body[data-role="parent"] #studentTab-entry .student-toolbar { margin-bottom: 8px
   window.applyRoleUi();
 })();
 </script>
+
+<script id="mobile-fixes-2025-10-js">
+(function(){
+  function enhanceImages(){
+    document.querySelectorAll('img').forEach(function(img){
+      if(!img.getAttribute('loading')) img.setAttribute('loading','lazy');
+      img.setAttribute('decoding','async');
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+    });
+  }
+  function fixCanvases(){
+    try{
+      var list = Array.from(document.querySelectorAll('canvas'));
+      list.forEach(function(c){ c.style.width='100%'; c.style.height='auto'; });
+      if(window.stuWeekChart && typeof stuWeekChart.resize==='function') stuWeekChart.resize();
+      if(window.stuMonthChart && typeof stuMonthChart.resize==='function') stuMonthChart.resize();
+      if(window.weekChart && typeof weekChart.resize==='function') weekChart.resize();
+      if(window._exportChart && typeof _exportChart.resize==='function') _exportChart.resize();
+    }catch(_){}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    enhanceImages();
+    fixCanvases();
+  });
+  window.addEventListener('resize', fixCanvases, { passive: true });
+  window.addEventListener('orientationchange', fixCanvases);
+})();
+</script>
+
 </body>
 </html>
