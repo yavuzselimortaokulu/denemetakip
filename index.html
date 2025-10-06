@@ -3,6 +3,192 @@
 <html lang="tr">
 <head>
 
+
+<script id="stu255-windows-android-forcefix-2025-10">
+/* === Student 255 Windows/Android date visibility hotfix — 2025-10-06 === */
+(function(){
+  var UA = navigator.userAgent || "";
+  var BUGGY = /Windows NT|Android/i.test(UA);
+  if (!BUGGY) return;
+
+  var _Date = Date;
+  var months = {
+    "ocak":0,"oca":0,
+    "şubat":1,"subat":1,"şub":1,"sub":1,
+    "mart":2,"mar":2,
+    "nisan":3,"nis":3,
+    "mayıs":4,"mayis":4,"may":4,
+    "haziran":5,"haz":5,
+    "temmuz":6,"tem":6,
+    "ağustos":7,"agustos":7,"ağu":7,"agu":7,
+    "eylül":8,"eylul":8,"eyl":8,
+    "ekim":9,"eki":9,
+    "kasım":10,"kasim":10,"kas":10,
+    "aralık":11,"aralik":11,"ara":11
+  };
+  var weekdays = /pazartesi|salı|sali|çarşamba|carsamba|perşembe|persembe|cuma|cumartesi|pazar/i;
+
+  function norm(s){
+    return String(s||"")
+      .replace(/\u00A0/g,' ')
+      .replace(weekdays,'')            // drop weekday words
+      .replace(/\b(saat)\b\.?/ig,'')   // drop "saat"
+      .replace(/\s{2,}/g,' ')
+      .trim();
+  }
+  function isValid(d){ return d instanceof _Date && !isNaN(d.getTime()); }
+  function noon(y,m,d){ return new _Date(y,m,d,12,0,0,0); }
+
+  function parseTR(s){
+    if (s == null) return null;
+    s = norm(s);
+
+    // Numeric timestamps
+    if (/^\d{10,13}$/.test(s)) {
+      var n = +s; if (s.length===10) n*=1000; var d = new _Date(n);
+      return isValid(d)? d : null;
+    }
+
+    // ISOish
+    var mISO = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?$/);
+    if (mISO){
+      var y=+mISO[1], mo=(+mISO[2])-1, da=+mISO[3];
+      if (mISO[4]) return new _Date(y,mo,da,+mISO[4],+mISO[5],+(mISO[6]||0));
+      return noon(y,mo,da);
+    }
+
+    // DD/MM/YYYY or DD.MM.YYYY or DD-MM-YYYY [HH:mm[:ss]]
+    var mEU = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (mEU){
+      var d=+mEU[1], m=(+mEU[2])-1, y=+mEU[3]; if (y<100) y+=2000;
+      if (mEU[4]) return new _Date(y,m,d,+mEU[4],+mEU[5],+(mEU[6]||0));
+      return noon(y,m,d);
+    }
+
+    // "29 Eylül 2025" [HH:mm]
+    var mTR = s.match(/^(\d{1,2})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i);
+    if (mTR){
+      var da=+mTR[1], key=mTR[2].toLowerCase(), y=+mTR[3], mo=months[key];
+      if (mo!=null){
+        if (mTR[4]) return new _Date(y,mo,da,+mTR[4],+mTR[5],+(mTR[6]||0));
+        return noon(y,mo,da);
+      }
+    }
+
+    // "2025 Eylül 29" [HH:mm]
+    var mTR2 = s.match(/^(\d{4})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i);
+    if (mTR2){
+      var y2=+mTR2[1], key2=mTR2[2].toLowerCase(), da2=+mTR2[3], mo2=months[key2];
+      if (mo2!=null){
+        if (mTR2[4]) return new _Date(y2,mo2,da2,+mTR2[4],+mTR2[5],+(mTR2[6]||0));
+        return noon(y2,mo2,da2);
+      }
+    }
+
+    return null;
+  }
+
+  // Safer global override: only apply when ctor receives string OR Date.parse fails
+  function DateFixed(){
+    var args = Array.prototype.slice.call(arguments);
+    if (!(this instanceof DateFixed)) return _Date.apply(this, args);
+    if (args.length===1 && typeof args[0]==='string'){
+      var d=_Date.call(this, args[0]);
+      if (!isValid(d)){
+        var alt = parseTR(args[0]);
+        if (alt) return alt;
+      }
+      return d;
+    }
+    return new (Function.prototype.bind.apply(_Date,[null].concat(args)))();
+  }
+  DateFixed.prototype = _Date.prototype;
+  DateFixed.now   = _Date.now.bind(_Date);
+  DateFixed.UTC   = _Date.UTC.bind(_Date);
+  DateFixed.parse = function(s){
+    var t = _Date.parse(s);
+    if (!isNaN(t)) return t;
+    var alt = parseTR(s);
+    return alt ? alt.getTime() : NaN;
+  };
+
+  try { Object.defineProperty(window,'Date',{value:DateFixed, configurable:false, writable:false}); }
+  catch(e){ window.Date = DateFixed; }
+
+  // Heuristic sanitizer: if we detect data objects for student 255, normalize their date fields
+  function looksLikeDateKey(k){
+    return /(^|\b)(date|tarih|day|gun|created|start|end|from|to|until|son|baslangic|bitis)(\b|$)/i.test(k);
+  }
+  function sanitizeObject(o, depth, seen){
+    if (!o || depth>4 || seen.has(o)) return;
+    seen.add(o);
+
+    if (Array.isArray(o)){
+      for (var i=0;i<o.length;i++) sanitizeObject(o[i], depth+1, seen);
+      return;
+    }
+    if (typeof o === 'object'){
+      var sid = null;
+      if ('studentId' in o) sid = o.studentId;
+      if ('id' in o && sid==null && (''+o.id)==='255') sid = 255;
+      if ('ogrenciId' in o) sid = o.ogrenciId;
+
+      var keys = Object.keys(o);
+      for (var j=0;j<keys.length;j++){
+        var k = keys[j], v = o[k];
+        if (typeof v === 'string' && looksLikeDateKey(k)){
+          var d = parseTR(v);
+          if (d){
+            // Replace with ISO string to be library-agnostic
+            o[k] = d.toISOString().slice(0,19); // 'YYYY-MM-DDTHH:mm:ss'
+            o[k+'_ts'] = d.getTime();
+          }
+        } else if (typeof v === 'object' && v){
+          sanitizeObject(v, depth+1, seen);
+        }
+      }
+
+      // If this object explicitly relates to student 255 and has a "dates"/"veriler" array, sanitize it too
+      if ((sid===255) && ('dates' in o || 'veriler' in o || 'data' in o)){
+        var arr = o.dates || o.veriler || o.data;
+        if (Array.isArray(arr)){
+          for (var i=0;i<arr.length;i++) sanitizeObject(arr[i], depth+1, seen);
+        }
+      }
+    }
+  }
+
+  function sweepGlobal(){
+    var seen = new WeakSet();
+    try{
+      // common roots
+      ['studentData','students','data','app','store','STATE','__DATA__'].forEach(function(name){
+        if (window[name]) sanitizeObject(window[name], 0, seen);
+      });
+      // attached to calendar libs
+      if (window.calendar) sanitizeObject(window.calendar, 0, seen);
+    }catch(e){}
+  }
+
+  function nudge(){
+    try{
+      sweepGlobal();
+      if (window.refreshCalendar) window.refreshCalendar();
+      if (window.calendar && typeof window.calendar.render==='function') window.calendar.render();
+      window.dispatchEvent(new Event('resize'));
+    }catch(e){}
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', nudge);
+  } else {
+    nudge();
+  }
+  window.addEventListener('load', nudge);
+  window.addEventListener('orientationchange', nudge);
+  window.addEventListener('resize', function(){ setTimeout(nudge,0); }, {passive:true});
+})();
+</script>
 <script id="date-parse-windows-android-fix-2025-10">
 // === Cross-platform Date parsing fix (TR locale & European formats) — 2025-10-06 ===
 (function(){
