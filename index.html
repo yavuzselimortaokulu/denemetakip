@@ -2,6 +2,146 @@
 
 <html lang="tr">
 <head>
+
+<script id="date-parse-windows-android-fix-2025-10">
+// === Cross-platform Date parsing fix (TR locale & European formats) — 2025-10-06 ===
+(function(){
+  var _Date = Date;
+
+  // month map for Turkish (and ASCII variants)
+  var months = {
+    "ocak":0,"oca":0,
+    "şubat":1,"subat":1,"şub":1,"sub":1,
+    "mart":2,"mar":2,
+    "nisan":3,"nis":3,
+    "mayıs":4,"mayis":4,"may":4,
+    "haziran":5,"haz":5,
+    "temmuz":6,"tem":6,
+    "ağustos":7,"agustos":7,"ağu":7,"agu":7,
+    "eylül":8,"eylul":8,"eyl":8,
+    "ekim":9,"eki":9,
+    "kasım":10,"kasim":10,"kas":10,
+    "aralık":11,"aralik":11,"ara":11
+  };
+
+  function normalize(str){
+    return String(str).trim()
+      .replace(/\u00A0/g,' ')      // nbsp -> space
+      .replace(/[.,]/g, function(m){ return m; });
+  }
+
+  function isValid(d){ return d instanceof _Date && !isNaN(d.getTime()); }
+
+  function fromYMD(y,m,d){
+    // Noon local time to avoid TZ rollbacks
+    return new _Date(y, m, d, 12, 0, 0, 0);
+  }
+
+  function parseFlexible(input){
+    if (input == null) return null;
+    var s = normalize(input);
+
+    // If it's a pure timestamp/number
+    if (/^\d{10,13}$/.test(s)) {
+      var n = parseInt(s,10);
+      if (s.length === 10) n *= 1000;
+      var d = new _Date(n);
+      return isValid(d)? d : null;
+    }
+
+    // ISO-like YYYY-MM-DD (allow / or . as well)
+    var m1 = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (m1){
+      var y = +m1[1], mo = (+m1[2])-1, da = +m1[3];
+      // if time provided, use local time; else noon
+      if (m1[4]) return new _Date(y, mo, da, +m1[4], +m1[5], +(m1[6]||0));
+      return fromYMD(y, mo, da);
+    }
+
+    // European DD/MM/YYYY (or ., -)
+    var m2 = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
+    if (m2){
+      var da2 = +m2[1], mo2 = (+m2[2])-1, y2 = +m2[3];
+      if (y2 < 100) y2 += 2000;
+      return fromYMD(y2, mo2, da2);
+    }
+
+    // Turkish "29 Eylül 2025" or "29 Eyl 2025"
+    var m3 = s.match(/^(\d{1,2})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{4})$/i);
+    if (m3){
+      var da3 = +m3[1];
+      var key = m3[2].toLowerCase();
+      var mo3 = months[key];
+      var y3 = +m3[3];
+      if (mo3 != null) return fromYMD(y3, mo3, da3);
+    }
+
+    // "2025 Eylül 29"
+    var m4 = s.match(/^(\d{4})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{1,2})$/i);
+    if (m4){
+      var y4 = +m4[1], key4 = m4[2].toLowerCase(), da4 = +m4[3];
+      var mo4 = months[key4];
+      if (mo4 != null) return fromYMD(y4, mo4, da4);
+    }
+
+    // "29-09-2025 14:30" or "29.09.2025 14:30"
+    var m5 = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m5){
+      var da5 = +m5[1], mo5 = (+m5[2])-1, y5 = +m5[3];
+      return new _Date(y5, mo5, da5, +m5[4], +m5[5], +(m5[6]||0));
+    }
+
+    // If nothing matched, return null
+    return null;
+  }
+
+  // Wrap Date constructor for string inputs
+  function DateFixed(){
+    var args = Array.prototype.slice.call(arguments);
+    if (!(this instanceof DateFixed)) {
+      // called without new
+      return _Date.apply(this, args);
+    }
+    if (args.length === 1 && typeof args[0] === 'string'){
+      var tryStd = new _Date(args[0]);
+      if (isValid(tryStd)) return tryStd;
+      var alt = parseFlexible(args[0]);
+      if (alt) return alt;
+    }
+    return new (Function.prototype.bind.apply(_Date, [null].concat(args)))();
+  }
+  DateFixed.prototype = _Date.prototype;
+  DateFixed.now = _Date.now.bind(_Date);
+  DateFixed.UTC = _Date.UTC.bind(_Date);
+  DateFixed.parse = function(s){
+    var std = _Date.parse(s);
+    if (!isNaN(std)) return std;
+    var alt = parseFlexible(s);
+    return alt ? alt.getTime() : NaN;
+  };
+
+  // Expose helper for app code
+  window.safeParseDateTR = function(s){ return parseFlexible(s); };
+
+  // Replace global Date (carefully)
+  try { window.Date = DateFixed; } catch(e){ /* some CSPs forbid this */ }
+
+  // Try to trigger re-render if a calendar is present
+  function nudge(){
+    try{
+      if (window.refreshCalendar) window.refreshCalendar();
+      if (window.calendar && typeof window.calendar.render === 'function') window.calendar.render();
+      window.dispatchEvent(new Event('resize'));
+    }catch(e){}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', nudge);
+  } else {
+    nudge();
+  }
+})();
+</script>
+
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>ÖĞRENCİ TAKİP PROGRAMI</title>
