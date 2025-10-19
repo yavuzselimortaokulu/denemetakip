@@ -3794,23 +3794,27 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
+
 <script>
-/* === Weekly report: mobile-only abbreviations + autoshrink === */
+/* === Weekly report: mobile abbreviations (forced for headers & first column) + autoshrink === */
 (function(){
   var SMALL_W = 420;
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+
   function lowerTR(s){ try{ return (s||"").toLocaleLowerCase('tr'); }catch(_){ return (s||"").toLowerCase(); } }
+
   var DAY_ABBR = {"pazartesi":"Pzt","salı":"Sal","sali":"Sal","çarşamba":"Çar","carsamba":"Çar","perşembe":"Per","persembe":"Per","cuma":"Cum","cumartesi":"Cmt","pazar":"Paz"};
-  var SUBJ_ABBR = {"türkçe":"Türk","turkce":"Türk","sosyal bilgiler":"Sos","din kültürü":"Din","din kulturu":"Din","ingilizce":"İng","matematik":"Mat","fen bilimleri":"Fen"};
+  var SUBJ_ABBR = {"türkçe":"Trk","turkce":"Trk","sosyal bilgiler":"Sos","din kültürü":"Din","din kulturu":"Din","ingilizce":"İng","matematik":"Mat","fen bilimleri":"Fen"};
 
   function abbreviateText(txt){
-    var L = lowerTR(txt.trim());
+    var L = lowerTR((txt||'').trim());
     if (DAY_ABBR[L]) return DAY_ABBR[L];
     if (SUBJ_ABBR[L]) return SUBJ_ABBR[L];
     for (var k in DAY_ABBR){ if (L.indexOf(k)!==-1) return txt.replace(new RegExp(k, 'i'), DAY_ABBR[k]); }
     for (var s in SUBJ_ABBR){ if (L.indexOf(s)!==-1) return txt.replace(new RegExp(s, 'i'), SUBJ_ABBR[s]); }
     return txt;
   }
-  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+
   function fits(el){ return !el ? true : (el.scrollWidth <= el.clientWidth + 1); }
   function autoshrink(el, minPx){
     try{
@@ -3821,31 +3825,64 @@ document.addEventListener('DOMContentLoaded', function(){
       while (!fits(el) && cur > min && guard-- > 0){ cur = cur - 1; el.style.fontSize = cur + "px"; }
     }catch(_){}
   }
-  function processWeeklyCell(cell){
-    if(!cell || !isSmall()) return;
-    if (fits(cell)) return;
-    var orig = cell.textContent;
-    var abbr = abbreviateText(orig);
-    if (abbr !== orig){ cell.textContent = abbr; }
-    if (!fits(cell)){ autoshrink(cell, 10); }
+
+  function forceAbbreviationsInWeeklyTable(tbl){
+    if (!tbl || !isSmall()) return;
+    if (tbl.__abbrApplied) return;
+    tbl.__abbrApplied = true;
+
+    try{
+      // 1) Header cells (days) except first column ("Ders")
+      var thead = tbl.tHead;
+      if (thead){
+        Array.from(thead.rows).forEach(function(row){
+          Array.from(row.cells).forEach(function(cell, idx){
+            if (idx === 0) return; // skip first column header
+            var ab = abbreviateText(cell.textContent);
+            if (ab !== cell.textContent) cell.textContent = ab;
+            if (!fits(cell)) autoshrink(cell, 10);
+          });
+        });
+      }
+
+      // 2) First column of body (subjects)
+      Array.from(tbl.tBodies || []).forEach(function(tb){
+        Array.from(tb.rows).forEach(function(row){
+          var cell = row.cells[0];
+          if (!cell) return;
+          var ab = abbreviateText(cell.textContent);
+          if (ab !== cell.textContent) cell.textContent = ab;
+          if (!fits(cell)) autoshrink(cell, 10);
+        });
+      });
+    }catch(_){}
   }
-  function processWeeklyTables(root){
+
+  function processAllWeekly(){
+    if (!isSmall()) return;
     ['#studentTab-week', '#stuWeekMatrix', '#weekMatrix'].forEach(function(sel){
-      var scope = (root || document).querySelector(sel);
+      var scope = document.querySelector(sel);
       if(!scope) return;
-      scope.querySelectorAll('th, td').forEach(processWeeklyCell);
+      scope.querySelectorAll('table').forEach(forceAbbreviationsInWeeklyTable);
     });
   }
-  function runAll(){ if (!isSmall()) return; processWeeklyTables(document); }
-  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', runAll); } else { runAll(); }
-  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(runAll, 120); });
+
+  // Initial
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', processAllWeekly); }
+  else { processAllWeekly(); }
+
+  // On resize (debounced)
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(processAllWeekly, 120); });
+
+  // Observe weekly containers for dynamic content updates
   ['studentTab-week','stuWeekMatrix','weekMatrix'].forEach(function(id){
     var el = document.getElementById(id); if(!el) return;
-    var mo = new MutationObserver(function(){ runAll(); });
+    var mo = new MutationObserver(function(){ processAllWeekly(); });
     mo.observe(el, {childList:true, subtree:true, characterData:true});
   });
 })();
 </script>
+
 
 </body>
 </html>
