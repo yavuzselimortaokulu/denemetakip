@@ -3884,6 +3884,61 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
+
+<script>
+/* === Weekly report: enforce single-line for day headers & first column on very small screens === */
+(function(){
+  var SMALL_W = 420;
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+  function fits(el){ return !el ? true : (el.scrollWidth <= el.clientWidth + 1); }
+  function autoshrinkSingleLine(cell, minPx){
+    if(!cell) return;
+    // Lock to single line
+    cell.style.whiteSpace = 'nowrap';
+    cell.style.wordBreak = 'keep-all';
+    // Reduce font until fits
+    try{
+      var style = window.getComputedStyle(cell);
+      var cur = parseFloat(style.fontSize || "14");
+      var min = Math.max(9, minPx||9);
+      var guard = 24;
+      while (!fits(cell) && cur > min && guard-- > 0){
+        cur -= 0.5;
+        cell.style.fontSize = cur + "px";
+      }
+    }catch(_){}
+  }
+  function run(){
+    if(!isSmall()) return;
+    ['#studentTab-week', '#stuWeekMatrix', '#weekMatrix'].forEach(function(sel){
+      var scope = document.querySelector(sel);
+      if(!scope) return;
+      // 1) Day headers (thead, skip first column header if it's "Ders")
+      var thead = scope.querySelector('table thead');
+      if(thead){
+        Array.from(thead.rows).forEach(function(row){
+          Array.from(row.cells).forEach(function(cell, idx){
+            if(idx===0) return;
+            autoshrinkSingleLine(cell, 9);
+          });
+        });
+      }
+      // 2) First column body cells (subjects)
+      scope.querySelectorAll('table tbody tr td:first-child').forEach(function(cell){
+        autoshrinkSingleLine(cell, 9);
+      });
+    });
+  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(run, 120); });
+  ['studentTab-week','stuWeekMatrix','weekMatrix'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    var mo = new MutationObserver(function(){ run(); });
+    mo.observe(el,{childList:true,subtree:true,characterData:true});
+  });
+})();
+</script>
+
 </body>
 </html>
 
