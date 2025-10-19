@@ -1001,46 +1001,27 @@ button.exitSmall .label{line-height:1}
 </style>
 
 <style>
-/* === Mobile report tables tuning === */
 @media (max-width: 820px){
-  /* Monthly: force fit into viewport */
-  #studentTab-month table,
-  #stuMonthTotals table,
-  #tMonthTotals table{
-    width:100% !important;
-    max-width:100% !important;
-    table-layout:fixed !important;
-    border-collapse:collapse;
+  /* Monthly: force-fit into viewport */
+  #studentTab-month table, #stuMonthTotals table, #tMonthTotals table{
+    width:100% !important; max-width:100% !important; table-layout:fixed !important; border-collapse:collapse;
   }
   #studentTab-month th, #studentTab-month td,
   #stuMonthTotals th, #stuMonthTotals td,
   #tMonthTotals th, #tMonthTotals td{
-    white-space:normal !important;
-    word-break:break-word;
-    padding:6px 8px;
+    white-space:normal !important; word-break:break-word; padding:6px 8px;
     font-size: clamp(11px, 3.2vw, 14px);
   }
-
   /* Weekly: try to fit first */
-  #studentTab-week table,
-  #stuWeekMatrix table,
-  #weekMatrix table{
-    width:100% !important;
-    max-width:100% !important;
-    table-layout:fixed !important;
-    border-collapse:collapse;
+  #studentTab-week table, #stuWeekMatrix table, #weekMatrix table{
+    width:100% !important; max-width:100% !important; table-layout:fixed !important; border-collapse:collapse;
   }
   #studentTab-week th, #studentTab-week td,
   #stuWeekMatrix th, #stuWeekMatrix td,
   #weekMatrix th, #weekMatrix td{
-    white-space:normal !important;
-    word-break:break-word;
-    padding:6px 8px;
+    white-space:normal !important; word-break:break-word; padding:6px 8px;
     font-size: clamp(11px, 3.2vw, 14px);
   }
-
-  .tableScroll.fitShrink > table,
-  .tableScroll.preferFit > table{ min-width: 0 !important; }
 }
 </style>
 
@@ -3814,65 +3795,54 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 <script>
-/* === Report tables: monthly shrink-first, weekly fit-then-scroll === */
+/* === Weekly report: mobile-only abbreviations + autoshrink === */
 (function(){
-  function isInside(el, sel){
-    try{ return !!(el && el.closest && el.closest(sel)); }catch(_){ return false; }
+  var SMALL_W = 420;
+  function lowerTR(s){ try{ return (s||"").toLocaleLowerCase('tr'); }catch(_){ return (s||"").toLowerCase(); } }
+  var DAY_ABBR = {"pazartesi":"Pzt","salı":"Sal","sali":"Sal","çarşamba":"Çar","carsamba":"Çar","perşembe":"Per","persembe":"Per","cuma":"Cum","cumartesi":"Cmt","pazar":"Paz"};
+  var SUBJ_ABBR = {"türkçe":"Türk","turkce":"Türk","sosyal bilgiler":"Sos","din kültürü":"Din","din kulturu":"Din","ingilizce":"İng","matematik":"Mat","fen bilimleri":"Fen"};
+
+  function abbreviateText(txt){
+    var L = lowerTR(txt.trim());
+    if (DAY_ABBR[L]) return DAY_ABBR[L];
+    if (SUBJ_ABBR[L]) return SUBJ_ABBR[L];
+    for (var k in DAY_ABBR){ if (L.indexOf(k)!==-1) return txt.replace(new RegExp(k, 'i'), DAY_ABBR[k]); }
+    for (var s in SUBJ_ABBR){ if (L.indexOf(s)!==-1) return txt.replace(new RegExp(s, 'i'), SUBJ_ABBR[s]); }
+    return txt;
   }
-  function ensureWrapTable(t){
-    if (!t) return null;
-    if (t.closest && t.closest('.tableScroll')) return t.closest('.tableScroll');
-    var wrap = document.createElement('div');
-    wrap.className = 'tableScroll';
-    t.parentNode && t.parentNode.insertBefore(wrap, t);
-    wrap.appendChild(t);
-    return wrap;
-  }
-  function tuneTableForFit(tbl){
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+  function fits(el){ return !el ? true : (el.scrollWidth <= el.clientWidth + 1); }
+  function autoshrink(el, minPx){
     try{
-      tbl.style.width = '100%';
-      tbl.style.maxWidth = '100%';
-      tbl.style.tableLayout = 'fixed';
+      var style = window.getComputedStyle(el);
+      var cur = parseFloat(style.fontSize || "14");
+      var min = Math.max(10, minPx||10);
+      var guard = 20;
+      while (!fits(el) && cur > min && guard-- > 0){ cur = cur - 1; el.style.fontSize = cur + "px"; }
     }catch(_){}
   }
-  function processTable(t){
-    // Monthly sections: force-fit (no scroll if avoidable)
-    if (isInside(t, '#studentTab-month') || isInside(t, '#stuMonthTotals') || isInside(t, '#tMonthTotals')){
-      tuneTableForFit(t);
-      var w = ensureWrapTable(t);
-      if (w){ w.classList.add('fitShrink'); }
-      return;
-    }
-    // Weekly sections: prefer fit first, then allow scroll if needed
-    if (isInside(t, '#studentTab-week') || isInside(t, '#stuWeekMatrix') || isInside(t, '#weekMatrix')){
-      tuneTableForFit(t);
-      var w = ensureWrapTable(t);
-      if (w){ w.classList.add('preferFit'); }
-      return;
-    }
+  function processWeeklyCell(cell){
+    if(!cell || !isSmall()) return;
+    if (fits(cell)) return;
+    var orig = cell.textContent;
+    var abbr = abbreviateText(orig);
+    if (abbr !== orig){ cell.textContent = abbr; }
+    if (!fits(cell)){ autoshrink(cell, 10); }
   }
-  function scanReports(root){
-    (root || document).querySelectorAll('table').forEach(processTable);
-  }
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ scanReports(document); });
-  } else { scanReports(document); }
-  var targets = ['studentTab-week','studentTab-month','stuWeekMatrix','stuMonthTotals','tMonthTotals'];
-  targets.forEach(function(id){
-    var el = document.getElementById(id);
-    if(!el) return;
-    var mo = new MutationObserver(function(muts){
-      muts.forEach(function(m){
-        if(m.addedNodes) m.addedNodes.forEach(function(n){
-          if(n.nodeType===1){
-            if(n.matches && n.matches('table')) processTable(n);
-            (n.querySelectorAll ? n.querySelectorAll('table') : []).forEach(processTable);
-          }
-        });
-      });
+  function processWeeklyTables(root){
+    ['#studentTab-week', '#stuWeekMatrix', '#weekMatrix'].forEach(function(sel){
+      var scope = (root || document).querySelector(sel);
+      if(!scope) return;
+      scope.querySelectorAll('th, td').forEach(processWeeklyCell);
     });
-    mo.observe(el, {childList:true, subtree:true});
-    scanReports(el);
+  }
+  function runAll(){ if (!isSmall()) return; processWeeklyTables(document); }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', runAll); } else { runAll(); }
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(runAll, 120); });
+  ['studentTab-week','stuWeekMatrix','weekMatrix'].forEach(function(id){
+    var el = document.getElementById(id); if(!el) return;
+    var mo = new MutationObserver(function(){ runAll(); });
+    mo.observe(el, {childList:true, subtree:true, characterData:true});
   });
 })();
 </script>
