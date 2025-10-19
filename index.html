@@ -2,332 +2,6 @@
 
 <html lang="tr">
 <head>
-
-
-<script id="stu255-windows-android-forcefix-2025-10">
-/* === Student 255 Windows/Android date visibility hotfix — 2025-10-06 === */
-(function(){
-  var UA = navigator.userAgent || "";
-  var BUGGY = /Windows NT|Android/i.test(UA);
-  if (!BUGGY) return;
-
-  var _Date = Date;
-  var months = {
-    "ocak":0,"oca":0,
-    "şubat":1,"subat":1,"şub":1,"sub":1,
-    "mart":2,"mar":2,
-    "nisan":3,"nis":3,
-    "mayıs":4,"mayis":4,"may":4,
-    "haziran":5,"haz":5,
-    "temmuz":6,"tem":6,
-    "ağustos":7,"agustos":7,"ağu":7,"agu":7,
-    "eylül":8,"eylul":8,"eyl":8,
-    "ekim":9,"eki":9,
-    "kasım":10,"kasim":10,"kas":10,
-    "aralık":11,"aralik":11,"ara":11
-  };
-  var weekdays = /pazartesi|salı|sali|çarşamba|carsamba|perşembe|persembe|cuma|cumartesi|pazar/i;
-
-  function norm(s){
-    return String(s||"")
-      .replace(/\u00A0/g,' ')
-      .replace(weekdays,'')            // drop weekday words
-      .replace(/\b(saat)\b\.?/ig,'')   // drop "saat"
-      .replace(/\s{2,}/g,' ')
-      .trim();
-  }
-  function isValid(d){ return d instanceof _Date && !isNaN(d.getTime()); }
-  function noon(y,m,d){ return new _Date(y,m,d,12,0,0,0); }
-
-  function parseTR(s){
-    if (s == null) return null;
-    s = norm(s);
-
-    // Numeric timestamps
-    if (/^\d{10,13}$/.test(s)) {
-      var n = +s; if (s.length===10) n*=1000; var d = new _Date(n);
-      return isValid(d)? d : null;
-    }
-
-    // ISOish
-    var mISO = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?)?$/);
-    if (mISO){
-      var y=+mISO[1], mo=(+mISO[2])-1, da=+mISO[3];
-      if (mISO[4]) return new _Date(y,mo,da,+mISO[4],+mISO[5],+(mISO[6]||0));
-      return noon(y,mo,da);
-    }
-
-    // DD/MM/YYYY or DD.MM.YYYY or DD-MM-YYYY [HH:mm[:ss]]
-    var mEU = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-    if (mEU){
-      var d=+mEU[1], m=(+mEU[2])-1, y=+mEU[3]; if (y<100) y+=2000;
-      if (mEU[4]) return new _Date(y,m,d,+mEU[4],+mEU[5],+(mEU[6]||0));
-      return noon(y,m,d);
-    }
-
-    // "29 Eylül 2025" [HH:mm]
-    var mTR = s.match(/^(\d{1,2})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i);
-    if (mTR){
-      var da=+mTR[1], key=mTR[2].toLowerCase(), y=+mTR[3], mo=months[key];
-      if (mo!=null){
-        if (mTR[4]) return new _Date(y,mo,da,+mTR[4],+mTR[5],+(mTR[6]||0));
-        return noon(y,mo,da);
-      }
-    }
-
-    // "2025 Eylül 29" [HH:mm]
-    var mTR2 = s.match(/^(\d{4})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/i);
-    if (mTR2){
-      var y2=+mTR2[1], key2=mTR2[2].toLowerCase(), da2=+mTR2[3], mo2=months[key2];
-      if (mo2!=null){
-        if (mTR2[4]) return new _Date(y2,mo2,da2,+mTR2[4],+mTR2[5],+(mTR2[6]||0));
-        return noon(y2,mo2,da2);
-      }
-    }
-
-    return null;
-  }
-
-  // Safer global override: only apply when ctor receives string OR Date.parse fails
-  function DateFixed(){
-    var args = Array.prototype.slice.call(arguments);
-    if (!(this instanceof DateFixed)) return _Date.apply(this, args);
-    if (args.length===1 && typeof args[0]==='string'){
-      var d=_Date.call(this, args[0]);
-      if (!isValid(d)){
-        var alt = parseTR(args[0]);
-        if (alt) return alt;
-      }
-      return d;
-    }
-    return new (Function.prototype.bind.apply(_Date,[null].concat(args)))();
-  }
-  DateFixed.prototype = _Date.prototype;
-  DateFixed.now   = _Date.now.bind(_Date);
-  DateFixed.UTC   = _Date.UTC.bind(_Date);
-  DateFixed.parse = function(s){
-    var t = _Date.parse(s);
-    if (!isNaN(t)) return t;
-    var alt = parseTR(s);
-    return alt ? alt.getTime() : NaN;
-  };
-
-  try { Object.defineProperty(window,'Date',{value:DateFixed, configurable:false, writable:false}); }
-  catch(e){ window.Date = DateFixed; }
-
-  // Heuristic sanitizer: if we detect data objects for student 255, normalize their date fields
-  function looksLikeDateKey(k){
-    return /(^|\b)(date|tarih|day|gun|created|start|end|from|to|until|son|baslangic|bitis)(\b|$)/i.test(k);
-  }
-  function sanitizeObject(o, depth, seen){
-    if (!o || depth>4 || seen.has(o)) return;
-    seen.add(o);
-
-    if (Array.isArray(o)){
-      for (var i=0;i<o.length;i++) sanitizeObject(o[i], depth+1, seen);
-      return;
-    }
-    if (typeof o === 'object'){
-      var sid = null;
-      if ('studentId' in o) sid = o.studentId;
-      if ('id' in o && sid==null && (''+o.id)==='255') sid = 255;
-      if ('ogrenciId' in o) sid = o.ogrenciId;
-
-      var keys = Object.keys(o);
-      for (var j=0;j<keys.length;j++){
-        var k = keys[j], v = o[k];
-        if (typeof v === 'string' && looksLikeDateKey(k)){
-          var d = parseTR(v);
-          if (d){
-            // Replace with ISO string to be library-agnostic
-            o[k] = d.toISOString().slice(0,19); // 'YYYY-MM-DDTHH:mm:ss'
-            o[k+'_ts'] = d.getTime();
-          }
-        } else if (typeof v === 'object' && v){
-          sanitizeObject(v, depth+1, seen);
-        }
-      }
-
-      // If this object explicitly relates to student 255 and has a "dates"/"veriler" array, sanitize it too
-      if ((sid===255) && ('dates' in o || 'veriler' in o || 'data' in o)){
-        var arr = o.dates || o.veriler || o.data;
-        if (Array.isArray(arr)){
-          for (var i=0;i<arr.length;i++) sanitizeObject(arr[i], depth+1, seen);
-        }
-      }
-    }
-  }
-
-  function sweepGlobal(){
-    var seen = new WeakSet();
-    try{
-      // common roots
-      ['studentData','students','data','app','store','STATE','__DATA__'].forEach(function(name){
-        if (window[name]) sanitizeObject(window[name], 0, seen);
-      });
-      // attached to calendar libs
-      if (window.calendar) sanitizeObject(window.calendar, 0, seen);
-    }catch(e){}
-  }
-
-  function nudge(){
-    try{
-      sweepGlobal();
-      if (window.refreshCalendar) window.refreshCalendar();
-      if (window.calendar && typeof window.calendar.render==='function') window.calendar.render();
-      window.dispatchEvent(new Event('resize'));
-    }catch(e){}
-  }
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', nudge);
-  } else {
-    nudge();
-  }
-  window.addEventListener('load', nudge);
-  window.addEventListener('orientationchange', nudge);
-  window.addEventListener('resize', function(){ setTimeout(nudge,0); }, {passive:true});
-})();
-</script>
-<script id="date-parse-windows-android-fix-2025-10">
-// === Cross-platform Date parsing fix (TR locale & European formats) — 2025-10-06 ===
-(function(){
-  var _Date = Date;
-
-  // month map for Turkish (and ASCII variants)
-  var months = {
-    "ocak":0,"oca":0,
-    "şubat":1,"subat":1,"şub":1,"sub":1,
-    "mart":2,"mar":2,
-    "nisan":3,"nis":3,
-    "mayıs":4,"mayis":4,"may":4,
-    "haziran":5,"haz":5,
-    "temmuz":6,"tem":6,
-    "ağustos":7,"agustos":7,"ağu":7,"agu":7,
-    "eylül":8,"eylul":8,"eyl":8,
-    "ekim":9,"eki":9,
-    "kasım":10,"kasim":10,"kas":10,
-    "aralık":11,"aralik":11,"ara":11
-  };
-
-  function normalize(str){
-    return String(str).trim()
-      .replace(/\u00A0/g,' ')      // nbsp -> space
-      .replace(/[.,]/g, function(m){ return m; });
-  }
-
-  function isValid(d){ return d instanceof _Date && !isNaN(d.getTime()); }
-
-  function fromYMD(y,m,d){
-    // Noon local time to avoid TZ rollbacks
-    return new _Date(y, m, d, 12, 0, 0, 0);
-  }
-
-  function parseFlexible(input){
-    if (input == null) return null;
-    var s = normalize(input);
-
-    // If it's a pure timestamp/number
-    if (/^\d{10,13}$/.test(s)) {
-      var n = parseInt(s,10);
-      if (s.length === 10) n *= 1000;
-      var d = new _Date(n);
-      return isValid(d)? d : null;
-    }
-
-    // ISO-like YYYY-MM-DD (allow / or . as well)
-    var m1 = s.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-    if (m1){
-      var y = +m1[1], mo = (+m1[2])-1, da = +m1[3];
-      // if time provided, use local time; else noon
-      if (m1[4]) return new _Date(y, mo, da, +m1[4], +m1[5], +(m1[6]||0));
-      return fromYMD(y, mo, da);
-    }
-
-    // European DD/MM/YYYY (or ., -)
-    var m2 = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
-    if (m2){
-      var da2 = +m2[1], mo2 = (+m2[2])-1, y2 = +m2[3];
-      if (y2 < 100) y2 += 2000;
-      return fromYMD(y2, mo2, da2);
-    }
-
-    // Turkish "29 Eylül 2025" or "29 Eyl 2025"
-    var m3 = s.match(/^(\d{1,2})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{4})$/i);
-    if (m3){
-      var da3 = +m3[1];
-      var key = m3[2].toLowerCase();
-      var mo3 = months[key];
-      var y3 = +m3[3];
-      if (mo3 != null) return fromYMD(y3, mo3, da3);
-    }
-
-    // "2025 Eylül 29"
-    var m4 = s.match(/^(\d{4})\s+([A-Za-z\u00C0-\u017FğüşöçıİĞÜŞÖÇ]+)\s+(\d{1,2})$/i);
-    if (m4){
-      var y4 = +m4[1], key4 = m4[2].toLowerCase(), da4 = +m4[3];
-      var mo4 = months[key4];
-      if (mo4 != null) return fromYMD(y4, mo4, da4);
-    }
-
-    // "29-09-2025 14:30" or "29.09.2025 14:30"
-    var m5 = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-    if (m5){
-      var da5 = +m5[1], mo5 = (+m5[2])-1, y5 = +m5[3];
-      return new _Date(y5, mo5, da5, +m5[4], +m5[5], +(m5[6]||0));
-    }
-
-    // If nothing matched, return null
-    return null;
-  }
-
-  // Wrap Date constructor for string inputs
-  function DateFixed(){
-    var args = Array.prototype.slice.call(arguments);
-    if (!(this instanceof DateFixed)) {
-      // called without new
-      return _Date.apply(this, args);
-    }
-    if (args.length === 1 && typeof args[0] === 'string'){
-      var tryStd = new _Date(args[0]);
-      if (isValid(tryStd)) return tryStd;
-      var alt = parseFlexible(args[0]);
-      if (alt) return alt;
-    }
-    return new (Function.prototype.bind.apply(_Date, [null].concat(args)))();
-  }
-  DateFixed.prototype = _Date.prototype;
-  DateFixed.now = _Date.now.bind(_Date);
-  DateFixed.UTC = _Date.UTC.bind(_Date);
-  DateFixed.parse = function(s){
-    var std = _Date.parse(s);
-    if (!isNaN(std)) return std;
-    var alt = parseFlexible(s);
-    return alt ? alt.getTime() : NaN;
-  };
-
-  // Expose helper for app code
-  window.safeParseDateTR = function(s){ return parseFlexible(s); };
-
-  // Replace global Date (carefully)
-  try { window.Date = DateFixed; } catch(e){ /* some CSPs forbid this */ }
-
-  // Try to trigger re-render if a calendar is present
-  function nudge(){
-    try{
-      if (window.refreshCalendar) window.refreshCalendar();
-      if (window.calendar && typeof window.calendar.render === 'function') window.calendar.render();
-      window.dispatchEvent(new Event('resize'));
-    }catch(e){}
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', nudge);
-  } else {
-    nudge();
-  }
-})();
-</script>
-
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>ÖĞRENCİ TAKİP PROGRAMI</title>
@@ -1048,59 +722,203 @@ button.exitSmall .label{line-height:1}
 }
 </style>
 
-<style id="calendar-visibility-fixes-2025-10">
-/* === CALENDAR VISIBILITY FIXES — Windows & Android — 2025-10-06 === */
-:root{
-  --cal-dot-size: 8px;
-  --cal-dot-color: #0ea5e9;
-  --cal-dot-color-dark: #38bdf8;
-  --cal-text-color: #0f172a;
-  --cal-text-color-dark: #e5e7eb;
-}
-@media (prefers-contrast: more) { :root { --cal-dot-size: 10px; } }
-
-.cal-dot, .event-dot, .day-dot, [data-dot],
-.fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot {
-  width: var(--cal-dot-size);
-  height: var(--cal-dot-size);
-  min-width: var(--cal-dot-size);
-  min-height: var(--cal-dot-size);
-  display: inline-block;
-  vertical-align: middle;
-  border-radius: 9999px;
-  background: var(--cal-dot-color);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-  opacity: 1 !important;
-  filter: none !important;
-  transform: none !important;
-  overflow: visible;
+<!-- === COMBINED PATCH: header title under subheader, remove monthly, hide 'Göster', student entry mobile === -->
+<style>
+/* 1) Header: Goals başlığını her boyutta subheader altına taşı (Goals içindekini gizle) */
+#goalsPage .gp-title{ display: none !important; }
+.header .header-goals-title{
+  display: block; margin-top: 6px; font-weight: 800;
+  font-size: clamp(18px, 2.2vw, 24px); line-height: 1.15; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.cal-dot::before, .event-dot::before, .day-dot::before, [data-dot]::before,
-.fc .fc-daygrid-dot::before, .fc .fc-daygrid-event-dot::before, .fc .fc-event-dot::before {
-  content: "" !important;
-}
+/* 2) Öğretmen modal: Aylık sekmesini kaldır */
+#teacherStudentDetail #repTabMonthlyBtn,
+#teacherStudentDetail #repTab-monthly{ display:none !important; }
 
-.calendar, .fc, .calendar *,
-.fc-theme-standard .fc-list, .fc-daygrid-day { color: var(--cal-text-color); }
-@media (prefers-color-scheme: dark){
-  .calendar, .fc, .calendar *, .fc-theme-standard .fc-list, .fc-daygrid-day {
-    color: var(--cal-text-color-dark);
+/* 3) Favoriler: 'Göster' butonunu gizle */
+#favoritesSection .editBtn{ display: none !important; }
+
+/* 4) Öğrenci soru giriş (student entry) mobil düzen */
+@media (max-width: 600px){
+  #studentTab-entry input[type="number"],
+  #studentTab-entry .goalInput{ min-height: 40px; font-size: 16px; }
+
+  #studentTab-entry .lessonRow.dense{
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "chip pct"
+      "controls controls";
+    gap: 8px 10px;
+    align-items: center;
   }
-  .cal-dot, .event-dot, .day-dot, [data-dot],
-  .fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot {
-    background: var(--cal-dot-color-dark);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.08);
+  #studentTab-entry .lessonRow.dense .chip{ grid-area: chip; font-size: 14px; }
+  #studentTab-entry .lessonRow.dense .pctBadge{ grid-area: pct; justify-self: end; }
+
+  #studentTab-entry .lessonControls{
+    grid-area: controls;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
   }
-}
+  #studentTab-entry .lessonControls .countWrap{
+    display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items:center;
+  }
+  #studentTab-entry .lessonControls input[type="number"]{ width: 88px; }
 
-.fc .fc-daygrid-event-harness, .fc .fc-daygrid-event { overflow: visible !important; }
+  #studentTab-entry .goalWrap{
+    display:grid; grid-template-columns:auto 1fr; gap:6px; align-items:center; justify-self:end;
+  }
+  #studentTab-entry .goalWrap .goalIcon{ line-height:1; }
+  #studentTab-entry .goalInput{ max-width: 96px; }
 
-@media (pointer: coarse){
-  .fc .fc-daygrid-event, .calendar .event { min-height: 36px; }
+  /* Çok dar cihazlar */
+  @media (max-width: 360px){
+    #studentTab-entry .lessonControls{
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "count goal";
+    }
+    #studentTab-entry .lessonControls .countWrap{ grid-area: count; }
+    #studentTab-entry .lessonControls .goalWrap{ grid-area: goal; justify-self: start; }
+  }
 }
 </style>
+<script>
+// 1) Header başlığını subheader altına yerleştir (Goals görünürken)
+(function(){
+  function ensureGoalsTitle(){
+    try{
+      var header = document.querySelector('.header');
+      var sub = header && header.querySelector('.subheader');
+      var srcTitle = document.querySelector('#goalsPage .gp-title');
+      if(!header || !sub || !srcTitle) return;
+      var txt = (srcTitle.textContent||'').trim();
+      var el = header.querySelector('.header-goals-title');
+      if(!el){
+        el = document.createElement('div');
+        el.className = 'header-goals-title';
+        sub.insertAdjacentElement('afterend', el);
+      }
+      if((el.textContent||'').trim() !== txt){ el.textContent = txt; }
+      var gp = document.getElementById('goalsPage');
+      var gpVisible = gp && window.getComputedStyle(gp).display !== 'none';
+      el.style.display = gpVisible ? '' : 'none';
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureGoalsTitle, 50); });
+  var mo = new MutationObserver(function(){ setTimeout(ensureGoalsTitle, 50); });
+  mo.observe(document.documentElement, {subtree:true, attributes:true, childList:true, attributeFilter:['style','class']});
+  window.addEventListener('resize', function(){ setTimeout(ensureGoalsTitle, 100); }, {passive:true});
+  window.addEventListener('orientationchange', function(){ setTimeout(ensureGoalsTitle, 200); }, {passive:true});
+})();
 
+// 2) Öğretmen modal açılışında Weekly'i varsayılan yap ve Aylık öğelerini kaldır
+(function(){
+  if (typeof openReportModal === 'function'){
+    const __origOpen = openReportModal;
+    window.openReportModal = function(){
+      var ov = document.getElementById('reportOverlay');
+      var box = document.getElementById('teacherStudentDetail');
+      if(ov) ov.style.display='block';
+      if(box){ box.style.display='block'; }
+      try{ showReportTab('weekly'); }catch(_){}
+    };
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    try{
+      var btn = document.getElementById('repTabMonthlyBtn'); if(btn) btn.remove();
+      var pane = document.getElementById('repTab-monthly'); if(pane) pane.remove();
+    }catch(e){}
+  });
+})();
+</script>
+<!-- === /COMBINED PATCH === -->
+
+<!-- === STUDENT ENTRY MOBILE FIT (final pass) === -->
+<style>
+@media (max-width: 600px){
+  html, body{ overflow-x: hidden; }
+
+  /* Allow shrinking in nested elements */
+  #studentTab-entry, 
+  #studentTab-entry *{ box-sizing: border-box; min-width: 0; }
+
+  /* List spacing */
+  #studentTab-entry .lessonList.dense{ gap: 10px; }
+
+  /* Row: compact padding and wraps cleanly */
+  #studentTab-entry .lessonRow.dense{
+    padding: 8px 10px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 10px;
+    align-items: center;
+  }
+
+  /* Chip + % badge line */
+  #studentTab-entry .lessonRow.dense .chip{
+    font-size: 13px;
+    max-width: 64vw;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #studentTab-entry .lessonRow.dense .pctBadge{ margin-left: auto; }
+
+  /* Controls take full width on the second line */
+  #studentTab-entry .lessonRow.dense .lessonControls{
+    margin-left: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Count cluster: (-) [input] (+) */
+  #studentTab-entry .lessonRow.dense .countWrap{
+    display: flex; align-items: center; gap: 6px;
+    flex: 1 1 60%;
+    min-width: 0;
+  }
+  #studentTab-entry .lessonRow.dense .numBtn{
+    flex: 0 0 36px; width: 36px; height: 36px;
+  }
+  #studentTab-entry .lessonRow.dense input[type="number"]{
+    flex: 1 1 80px;
+    width: auto !important; min-width: 60px; max-width: 120px;
+    min-height: 40px; font-size: 16px;
+  }
+
+  /* Goal cluster: 🎯 [goalInput] */
+  #studentTab-entry .lessonRow.dense .goalWrap{
+    display: flex; align-items: center; gap: 6px;
+    flex: 1 1 40%;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+  #studentTab-entry .lessonRow.dense .goalInput{
+    width: clamp(56px, 22vw, 92px) !important;
+    min-height: 40px; font-size: 16px;
+  }
+
+  /* Ultra narrow phones */
+  @media (max-width: 360px){
+    #studentTab-entry .lessonRow.dense .lessonControls{
+      flex-direction: column; align-items: stretch; gap: 6px;
+    }
+    #studentTab-entry .lessonRow.dense .countWrap{
+      width: 100%; justify-content: space-between;
+    }
+    #studentTab-entry .lessonRow.dense .goalWrap{
+      width: 100%; justify-content: space-between;
+    }
+  }
+}
+</style>
+<!-- === /STUDENT ENTRY MOBILE FIT === -->
 </head>
 <style>
 /* ===== Ders Hedefleri (Goals Page) — Modern görünüm ===== */
@@ -3428,63 +3246,48 @@ body[data-role="parent"] #studentTab-entry .student-toolbar { margin-bottom: 8px
   window.applyRoleUi();
 })();
 </script>
-
-<script id="calendar-visibility-fixes-2025-10-js">
-(function(){
-  function scaleCanvasForDPR(c){
-    try{
-      if (c.dataset.skipDpr) return;
-      if (c._chart || c._chartjs || c.chart || c.__chartist__) return;
-      var rect = c.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      var ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-      var w = Math.round(rect.width);
-      var h = Math.round(rect.height);
-      if (c.width !== w * ratio || c.height !== h * ratio){
-        c.width = w * ratio;
-        c.height = h * ratio;
-        var ctx = c.getContext('2d');
-        if (ctx && ctx.setTransform) ctx.setTransform(ratio,0,0,ratio,0,0);
-      }
-    }catch(e){}
-  }
-
-  function normalizeDots(){
-    var candidates = Array.from(document.querySelectorAll(
-      '.cal-dot, .event-dot, .day-dot, [data-dot], .fc .fc-daygrid-dot, .fc .fc-daygrid-event-dot, .fc .fc-event-dot'
-    ));
-    candidates.forEach(function(el){
-      var t = (el.textContent || '').trim();
-      if (t === '•' || t === '●' || t === '·' || t === '') {
-        el.textContent = '';
-        el.setAttribute('aria-hidden','true');
-        var s = getComputedStyle(el);
-        if (parseFloat(s.width) < 4 || parseFloat(s.height) < 4){
-          el.style.width = 'var(--cal-dot-size)';
-          el.style.height = 'var(--cal-dot-size)';
-          el.style.display = 'inline-block';
-        }
-      }
-    });
-  }
-
-  function unclipEvents(){
-    document.querySelectorAll('.fc .fc-daygrid-day-frame, .calendar .day').forEach(function(n){
-      if (getComputedStyle(n).overflow === 'hidden') n.style.overflow = 'visible';
-    });
-  }
-
-  function applyFixes(){
-    Array.from(document.querySelectorAll('canvas')).forEach(scaleCanvasForDPR);
-    normalizeDots();
-    unclipEvents();
-  }
-
-  document.addEventListener('DOMContentLoaded', applyFixes);
-  window.addEventListener('resize', applyFixes, { passive: true });
-  window.addEventListener('orientationchange', applyFixes);
-})();
-</script>
-
 </body>
 </html>
+
+<!-- ===== MOBILE REDE
+<!-- ===== ALIGNMENT RESTORE (UL reset + safe card padding) ===== -->
+<style>
+/* Remove browser default indent from the lesson list so rows align with the title */
+#studentPanel ul.lessonList{
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  list-style: none !important;
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+}
+
+/* Ensure rows stay within container without negative margins */
+#studentTab-entry .lessonRow.dense{
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Keep desktop spacing consistent */
+@media (min-width: 641px){
+  #studentTab-entry .lessonRow.dense{
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* Keep phone spacing tidy */
+@media (max-width: 640px){
+  #studentTab-entry .lessonRow.dense{
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+</style>
+<!-- ===== /ALIGNMENT RESTORE ===== -->
+
+<!-- ===== MOB
