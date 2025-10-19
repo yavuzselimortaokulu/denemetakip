@@ -999,6 +999,129 @@ button.exitSmall .label{line-height:1}
 #teacherLogin .rememberRow input[type=checkbox]:checked::after{ opacity:1; }
 #teacherLogin .rememberRow label{ user-select:none; font-weight:700; opacity:.95; }
 </style>
+
+<style>
+@media (max-width: 820px){
+  /* Monthly: force-fit into viewport */
+  #studentTab-month table, #stuMonthTotals table, #tMonthTotals table{
+    width:100% !important; max-width:100% !important; table-layout:fixed !important; border-collapse:collapse;
+  }
+  #studentTab-month th, #studentTab-month td,
+  #stuMonthTotals th, #stuMonthTotals td,
+  #tMonthTotals th, #tMonthTotals td{
+    white-space:normal !important; word-break:break-word; padding:6px 8px;
+    font-size: clamp(11px, 3.2vw, 14px);
+  }
+  /* Weekly: try to fit first */
+  #studentTab-week table, #stuWeekMatrix table, #weekMatrix table{
+    width:100% !important; max-width:100% !important; table-layout:fixed !important; border-collapse:collapse;
+  }
+  #studentTab-week th, #studentTab-week td,
+  #stuWeekMatrix th, #stuWeekMatrix td,
+  #weekMatrix th, #weekMatrix td{
+    white-space:normal !important; word-break:break-word; padding:6px 8px;
+    font-size: clamp(11px, 3.2vw, 14px);
+  }
+}
+</style>
+
+
+<style id="fav-right-align-patch">
+/* === Favorilerim: yıldız (★) ve hedef (🎯) ikonlarını sağ tarafa hizala === */
+#favoritesSection .studentItem .leftGroup{ flex:1; }
+#favoritesSection .studentItem .leftGroup .studentNameBtn{ flex:0 1 auto; }
+#favoritesSection .studentItem .starBtn{ margin-left:auto; }  /* adı ve sınıfından sonra tüm boşluğu al */
+#favoritesSection .studentItem .targetBtn{ margin-left:8px; } /* yıldızın sağına yakın dursun */
+
+/* Dikey hizalama ve dar ekran uyumu */
+#favoritesSection .studentItem .starBtn,
+#favoritesSection .studentItem .targetBtn{
+  display:inline-flex; align-items:center; justify-content:center;
+}
+</style>
+
+
+<style id="teacher-message-css">
+/* --- Öğretmen Mesajı Sekmesi (Modal) --- */
+#repTab-message{ display:none; }
+#repTab-message.active{ display:block; }
+#repTabMessageBtn.pill.active{ box-shadow:inset 0 0 0 1px var(--accent2); }
+#teacherMsgText{ background:rgba(255,255,255,.02); border:1px solid var(--cardBorder); border-radius:12px; padding:10px; color:var(--text); }
+#teacherMsgText:focus{ outline:none; border-color:var(--accent2); box-shadow:0 0 0 3px rgba(6,182,212,.15); }
+
+/* --- Öğrenci tarafı: şeffaf mesaj penceresi --- */
+#studentMsgOverlay{ position:fixed; inset:0; display:none; z-index:11000; background:rgba(15,23,42,.55); backdrop-filter: blur(3px); }
+#studentMsgBox{ position:fixed; left:50%; top:11%; transform:translateX(-50%); width:min(560px, 92vw); background:rgba(255,255,255,.04); border:1px solid var(--cardBorder); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+#studentMsgBox .hdr{ display:flex; align-items:center; gap:10px; padding:14px; border-bottom:1px solid var(--cardBorder); }
+#studentMsgBox .hdr .title{ font-weight:700; letter-spacing:.2px; }
+#studentMsgBox .body{ padding:14px; line-height:1.6; }
+#studentMsgBox .from{ opacity:.8; margin-bottom:6px; }
+#studentMsgBox .actions{ display:flex; justify-content:flex-end; gap:8px; padding:0 14px 14px 14px; }
+#studentMsgBox .actions .pill{ cursor:pointer; }
+
+/* Sekmeler: sadece aktif olan görünsün */
+#repTab-daily, #repTab-weekly, #repTab-monthly, #repTab-message{ display:none; }
+#repTab-daily.active, #repTab-weekly.active, #repTab-monthly.active, #repTab-message.active{ display:block; }
+
+/* Mesaj sekmesi açıkken modalı yukarı al */
+#teacherStudentDetail.topMode.asModal{ inset: 10% auto auto 50%; transform: translateX(-50%); }
+/* Daha küçük ekranlar için biraz daha aşağı */
+@media (max-width: 640px){
+  #teacherStudentDetail.topMode.asModal{ inset: 6% auto auto 50%; }
+}
+
+/* Gönder satırı tam genişlik */
+#repTab-message .row{ display:block !important; margin-top:10px !important; }
+#repTab-message .row .action{ display:block; width:100%; margin:0; }
+#teacherMsgStatus{ display:none; } /* Toast geldiği için yazı uyarısını gizliyoruz */
+
+/* Öğretmen Toast (şeffaf modal) */
+#teacherToast{position:fixed; left:50%; top:8%;transform:translateX(-50%);background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.55);border-radius:14px;padding:12px 16px;box-shadow:0 18px 40px rgba(34,197,94,.25);backdrop-filter: blur(4px);color:#ecfdf5;z-index:12000;display:none;max-width:min(92vw,640px);text-align:center;font-weight:700;}
+#teacherToast.show{ display:block; animation: toastFade .2s ease-out; }
+@keyframes toastFade { from{ opacity:0; transform:translateX(-50%) translateY(-6px);} to{ opacity:1; transform:translateX(-50%) translateY(0);} }
+
+/* Mesaj kutusu: içerik ayırt edici arka plan */
+#studentMsgBox .bubble{
+  margin-top:8px;
+  background:rgba(255,255,255,.08);
+  border:1px solid var(--cardBorder);
+  border-radius:12px;
+  padding:12px 14px;
+  line-height:1.7;
+}
+
+/* Başlık satırı: sağdaki kapat düğmesi kaldırıldı, boşluklar ayarlandı */
+#studentMsgBox .hdr{ gap:8px; }
+#studentMsgBox .hdr .title{ font-weight:800; }
+
+/* Açıklama metni */
+#studentMsgFrom{ opacity:.9; margin-bottom:2px; font-weight:600; }
+
+/* Alt eylem alanı ortalı ve kırmızı şeffaf stil */
+#studentMsgBox .actions{ justify-content:center; }
+#studentMsgBox .actions .pill.danger{
+  background:rgba(239,68,68,.14);
+  border:1px solid rgba(239,68,68,.6);
+  color:#ffe4e6;
+  font-weight:700;
+  padding:10px 18px;
+  min-width:220px;
+  text-align:center;
+}
+#studentMsgBox .actions .pill.danger:hover{ filter:brightness(1.05); }
+
+/* ---- Patch: Mesaj sayfası sınırları belirgin + şeffaflık %10 azaltıldı ---- */
+#studentMsgBox{
+  background: rgba(255,255,255,.14) !important; /* önce .04 idi => daha opak */
+  border: 2px solid rgba(255,255,255,.22) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06) inset !important;
+}
+#studentMsgBox .bubble{
+  background: rgba(255,255,255,.18) !important; /* önce .08 idi */
+  border-color: rgba(255,255,255,.26) !important;
+}
+</style>
+
 </head>
 <style>
 /* ===== Ders Hedefleri (Goals Page) — Modern görünüm ===== */
@@ -1374,6 +1497,7 @@ button.exitSmall .label{line-height:1}
 <div class="modalTabs">
 <button class="pill active" id="repTabDailyBtn" onclick="showReportTab('daily')">Günlük</button>
 <button class="pill" id="repTabWeeklyBtn" onclick="showReportTab('weekly')">Haftalık</button>
+<button class="pill" id="repTabMessageBtn" onclick="showReportTab('message')">Öğretmen Mesajı</button>
 <button class="pill" id="repTabMonthlyBtn" onclick="showReportTab('monthly')">Aylık</button>
 </div>
 <button class="pill modalClose" onclick="closeReportModal()">Kapat ×</button>
@@ -1410,6 +1534,15 @@ button.exitSmall .label{line-height:1}
 </div>
 <div class="sectionTitle" style="margin-top:10px">Aylık Toplam (Ders Bazlı)</div>
 <div class="exportCard" id="tMonthTotals"></div>
+</div>
+<div id="repTab-message">
+  <div class="sectionTitle">Öğretmen Mesajı</div>
+  <div class="ghost" style="margin-bottom:6px">Bu mesaj <strong id="teacherMsgStudentName">seçili öğrenci</strong> için gösterilecektir.</div>
+  <textarea id="teacherMsgText" rows="5" style="width:100%;resize:vertical;min-height:120px;" placeholder="Öğrenciye iletmek istediğiniz mesajı yazın..."></textarea>
+  <div class="row" style="justify-content:flex-end; gap:8px; margin-top:8px;">
+    <span id="teacherMsgStatus" class="ghost" style="margin-right:auto"></span>
+    <button class="action" type="button" onclick="sendTeacherMessage()">Gönder</button>
+  </div>
 </div>
 </div>
 <!-- PDF için görünmeyen export alanı -->
@@ -3767,44 +3900,516 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+
+
+<script>
+/* === Weekly report: mobile abbreviations (forced for headers & first column) + autoshrink === */
+(function(){
+  var SMALL_W = 420;
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+
+  function lowerTR(s){ try{ return (s||"").toLocaleLowerCase('tr'); }catch(_){ return (s||"").toLowerCase(); } }
+
+  var DAY_ABBR = {"pazartesi":"Pzt","salı":"Sal","sali":"Sal","çarşamba":"Çar","carsamba":"Çar","perşembe":"Per","persembe":"Per","cuma":"Cum","cumartesi":"Cmt","pazar":"Paz"};
+  var SUBJ_ABBR = {"türkçe":"Trk","turkce":"Trk","sosyal bilgiler":"Sos","din kültürü":"Din","din kulturu":"Din","ingilizce":"İng","matematik":"Mat","fen bilimleri":"Fen"};
+
+  function abbreviateText(txt){
+    var L = lowerTR((txt||'').trim());
+    if (DAY_ABBR[L]) return DAY_ABBR[L];
+    if (SUBJ_ABBR[L]) return SUBJ_ABBR[L];
+    for (var k in DAY_ABBR){ if (L.indexOf(k)!==-1) return txt.replace(new RegExp(k, 'i'), DAY_ABBR[k]); }
+    for (var s in SUBJ_ABBR){ if (L.indexOf(s)!==-1) return txt.replace(new RegExp(s, 'i'), SUBJ_ABBR[s]); }
+    return txt;
+  }
+
+  function fits(el){ return !el ? true : (el.scrollWidth <= el.clientWidth + 1); }
+  function autoshrink(el, minPx){
+    try{
+      var style = window.getComputedStyle(el);
+      var cur = parseFloat(style.fontSize || "14");
+      var min = Math.max(10, minPx||10);
+      var guard = 20;
+      while (!fits(el) && cur > min && guard-- > 0){ cur = cur - 1; el.style.fontSize = cur + "px"; }
+    }catch(_){}
+  }
+
+  function forceAbbreviationsInWeeklyTable(tbl){
+    if (!tbl || !isSmall()) return;
+    if (tbl.__abbrApplied) return;
+    tbl.__abbrApplied = true;
+
+    try{
+      // 1) Header cells (days) except first column ("Ders")
+      var thead = tbl.tHead;
+      if (thead){
+        Array.from(thead.rows).forEach(function(row){
+          Array.from(row.cells).forEach(function(cell, idx){
+            if (idx === 0) return; // skip first column header
+            var ab = abbreviateText(cell.textContent);
+            if (ab !== cell.textContent) cell.textContent = ab;
+            if (!fits(cell)) autoshrink(cell, 10);
+          });
+        });
+      }
+
+      // 2) First column of body (subjects)
+      Array.from(tbl.tBodies || []).forEach(function(tb){
+        Array.from(tb.rows).forEach(function(row){
+          var cell = row.cells[0];
+          if (!cell) return;
+          var ab = abbreviateText(cell.textContent);
+          if (ab !== cell.textContent) cell.textContent = ab;
+          if (!fits(cell)) autoshrink(cell, 10);
+        });
+      });
+    }catch(_){}
+  }
+
+  function processAllWeekly(){
+    if (!isSmall()) return;
+    ['#studentTab-week', '#stuWeekMatrix', '#weekMatrix'].forEach(function(sel){
+      var scope = document.querySelector(sel);
+      if(!scope) return;
+      scope.querySelectorAll('table').forEach(forceAbbreviationsInWeeklyTable);
+    });
+  }
+
+  // Initial
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', processAllWeekly); }
+  else { processAllWeekly(); }
+
+  // On resize (debounced)
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(processAllWeekly, 120); });
+
+  // Observe weekly containers for dynamic content updates
+  ['studentTab-week','stuWeekMatrix','weekMatrix'].forEach(function(id){
+    var el = document.getElementById(id); if(!el) return;
+    var mo = new MutationObserver(function(){ processAllWeekly(); });
+    mo.observe(el, {childList:true, subtree:true, characterData:true});
+  });
+})();
+</script>
+
+
+
+<script>
+/* === Weekly report: enforce single-line for day headers & first column on very small screens === */
+(function(){
+  var SMALL_W = 420;
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= SMALL_W; }
+  function fits(el){ return !el ? true : (el.scrollWidth <= el.clientWidth + 1); }
+  function autoshrinkSingleLine(cell, minPx){
+    if(!cell) return;
+    // Lock to single line
+    cell.style.whiteSpace = 'nowrap';
+    cell.style.wordBreak = 'keep-all';
+    // Reduce font until fits
+    try{
+      var style = window.getComputedStyle(cell);
+      var cur = parseFloat(style.fontSize || "14");
+      var min = Math.max(9, minPx||9);
+      var guard = 24;
+      while (!fits(cell) && cur > min && guard-- > 0){
+        cur -= 0.5;
+        cell.style.fontSize = cur + "px";
+      }
+    }catch(_){}
+  }
+  function run(){
+    if(!isSmall()) return;
+    ['#studentTab-week', '#stuWeekMatrix', '#weekMatrix'].forEach(function(sel){
+      var scope = document.querySelector(sel);
+      if(!scope) return;
+      // 1) Day headers (thead, skip first column header if it's "Ders")
+      var thead = scope.querySelector('table thead');
+      if(thead){
+        Array.from(thead.rows).forEach(function(row){
+          Array.from(row.cells).forEach(function(cell, idx){
+            if(idx===0) return;
+            autoshrinkSingleLine(cell, 9);
+          });
+        });
+      }
+      // 2) First column body cells (subjects)
+      scope.querySelectorAll('table tbody tr td:first-child').forEach(function(cell){
+        autoshrinkSingleLine(cell, 9);
+      });
+    });
+  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(run, 120); });
+  ['studentTab-week','stuWeekMatrix','weekMatrix'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    var mo = new MutationObserver(function(){ run(); });
+    mo.observe(el,{childList:true,subtree:true,characterData:true});
+  });
+})();
+</script>
+
+
+
+
+
+    
+  </div>
+</div>
+
+  </div>
+</div>
+
+
+
+<script id="teacher-message-js">
+(function(){
+
+  // Türkçe ayrılma hali (ablative) ekleyen yardımcı: "Emre Demirbaş’tan"
+  function trAblativeSuffix(name){
+    var n=(name||"").trim();
+    if(!n) return "’dan";
+    // Sonda yer alan harf (Türkçe karakterleri de say)
+    var letters = n.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, "");
+    if(!letters) return "’dan";
+    var lastChar = letters.slice(-1).toLowerCase();
+    var vowels = (letters.match(/[aeıioöuü]/gi) || []);
+    var lastVowel = vowels.length ? vowels[vowels.length-1].toLowerCase() : 'a';
+    var unvoiced = "fstkçşhp";
+    var cons = unvoiced.indexOf(lastChar) >= 0 ? 't' : 'd';
+    var back = "aıou";
+    var vow = back.indexOf(lastVowel) >= 0 ? 'a' : 'e';
+    return "’" + cons + (vow==='a' ? 'an' : 'en');
+  }
+  function deriveTeacherName(){
+    var n = (window.currentTeacherName||"").trim();
+    if(!n){
+      try{
+        var el=[].slice.call(document.querySelectorAll('body *')).find(function(x){ return /Hoş geldiniz,\s*/.test(x.textContent||''); });
+        if(el){
+          var m=(el.textContent||'').match(/Hoş geldiniz,\s*(.+)/);
+          if(m) n=m[1].trim();
+        }
+      }catch(e){}
+    }
+    // Parantez içindeki kod varsa çıkar: "Emre Demirbaş (703501)" -> "Emre Demirbaş"
+    n = n.replace(/\(\d+\)\s*$/, '').trim();
+    return n || "Öğretmen";
+  }
+
+  // Helper: resolve selected student id reliably
+  function resolveSelectedStudentId(){
+    var root = document.getElementById("teacherStudentDetail");
+    var sid = root && root.dataset ? root.dataset.studentNum : "";
+    if(!sid && typeof currentDetailNum !== "undefined" && currentDetailNum!=null){ sid = String(currentDetailNum); }
+    if(!sid && typeof window.currentDetailNum !== "undefined" && window.currentDetailNum!=null){ sid = String(window.currentDetailNum); }
+    if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
+    if(!sid){
+      var t = (document.getElementById("tsdTitle")||{}).textContent || "";
+      var m = t.match(/\((\d+)\)/);
+      if(m) sid = m[1];
+    }
+    return sid || "";
+  }
+
+  // Yeni sekme desteği: message
+  var _origShowReportTab = window.showReportTab;
+  window.showReportTab = function(tab){
+    if (typeof _origShowReportTab === "function") { _origShowReportTab(tab); }
+    // Toggle message tab manually
+    var p = document.getElementById("repTab-message");
+    var b = document.getElementById("repTabMessageBtn");
+    if (p) p.classList.toggle("active", tab === "message");
+    if (b) b.classList.toggle("active", tab === "message");
+    var root = document.getElementById("teacherStudentDetail");
+    if(root) root.classList.toggle("topMode", tab === "message");
+  };
+
+  // Öğretmenden öğrenciye mesaj bırak
+  window.sendTeacherMessage = function(){
+    var ta = document.getElementById("teacherMsgText");
+    var s = (ta && ta.value || "").trim();
+    var sid = resolveSelectedStudentId();
+    if(!sid){ alert("Öğrenci seçili değil."); return; }
+    if(!s){ alert("Lütfen mesaj yazın."); return; }
+    var tname = deriveTeacherName();
+    var payload = { msg: s, teacher: tname, ts: Date.now() };
+    try { sessionStorage.setItem("studentMsg_" + sid, JSON.stringify(payload)); } catch(e){}
+    var st = document.getElementById("teacherMsgStatus");
+    if(st){ st.textContent = ""; }
+    showTeacherToast("Mesaj öğrenciye iletildi.");
+    if(ta) ta.value = "";
+  };
+
+  // Öğrenci panelinde mesajı göster
+  window.maybeShowStudentMessage = function(){
+    var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
+    if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
+    if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
+    if(!sid){
+      // Gerekirse sayfadaki başlıktan anla
+      var h = (document.getElementById("studentHeaderName")||{}).textContent || "";
+      var m = h && h.match(/\((\d+)\)/);
+      if(m) sid = m[1];
+    }
+    if(!sid) return;
+    var raw = null;
+    try { raw = sessionStorage.getItem("studentMsg_" + sid); } catch(e){}
+    if(!raw) return;
+    var data = null;
+    try { data = JSON.parse(raw); } catch(e){}
+    if(!data || !data.msg) return;
+    var ov = document.getElementById("studentMsgOverlay");
+    var fromEl = document.getElementById("studentMsgFrom");
+    var mEl = document.getElementById("studentMsgContent");
+    var teacherName = (data.teacher || deriveTeacherName());
+    var intro = teacherName + trAblativeSuffix(teacherName) + " sana mesaj var!";
+    if(fromEl){ fromEl.textContent = intro; }
+    var msgText = data.msg || "";
+    if(msgText){ msgText = msgText.charAt(0).toUpperCase() + msgText.slice(1); }
+    if(mEl) mEl.textContent = msgText;
+    if(ov) ov.style.display = "block";
+  };
+
+  window.closeStudentMsg = function(){
+    var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
+    if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
+    if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
+    try { if(sid) sessionStorage.removeItem("studentMsg_" + sid); } catch(e){}
+    var ov = document.getElementById("studentMsgOverlay");
+    if(ov) ov.style.display = "none";
+  };
+
+  // teacherShowStudent çalışınca hem görünen metni hem de güvenli öğrenci id bilgisini kaydet
+  if (typeof window.teacherShowStudent === "function"){
+    var _origTSS = window.teacherShowStudent;
+    window.teacherShowStudent = function(num){
+      _origTSS(num);
+      var root = document.getElementById("teacherStudentDetail");
+      if(root) root.dataset.studentNum = String(num || "");
+      window._msgStudentNum = num;
+      // Başlığın kopyası
+      setTimeout(function(){
+        try {
+          var title = document.getElementById("tsdTitle");
+          var span = document.getElementById("teacherMsgStudentName");
+          if(title && span){ span.textContent = title.textContent || "seçili öğrenci"; }
+        } catch(e){}
+      }, 200);
+    };
+  }
+
+  // Öğrenci tabına geçişte mesajı otomatik göster
+  if (typeof window.showStudentTab === "function"){
+    var _origSST = window.showStudentTab;
+    window.showStudentTab = function(tab){
+      _origSST(tab);
+      if(tab === "entry"){ try { window.maybeShowStudentMessage(); } catch(e){} }
+    };
+  }
+})();
+
+  // Şeffaf toast
+  window.showTeacherToast = function(text){
+    var el = document.getElementById("teacherToast");
+    if(!el) return;
+    el.textContent = text || "Mesaj iletildi.";
+    el.classList.add("show");
+    setTimeout(function(){ el.classList.remove("show"); }, 3000);
+  };
+</script>
+
+
+
+<!-- Öğretmen bildirimi (şeffaf modal) -->
+<div id="teacherToast" role="status" aria-live="polite">Mesaj iletildi.</div>
+
+
+
+<div id="studentMsgOverlay" aria-hidden="true" style="display:none">
+  <div id="studentMsgBox" role="dialog" aria-label="Öğretmen Mesajı">
+    <div class="hdr">
+      <div class="title">Öğretmen Mesajı</div>
+    </div>
+    <div class="body">
+      <div class="from" id="studentMsgFrom"></div>
+      <div id="studentMsgContent" class="bubble"></div>
+    </div>
+    <div class="actions center">
+      <button class="pill danger" onclick="closeStudentMsg()">Kapat ve Sil</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- === TEACHER MESSAGE + STUDENT LISTENER INTEGRATION === -->
+<script>
+(function(){
+  // Toast helper for teacher
+  function showTeacherToast(msg){
+  try{
+    var t = document.getElementById('teacherToast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'teacherToast';
+      // Inline, high-visibility styles to avoid CSS dependency
+      t.setAttribute('style',[
+        'position:fixed',
+        'left:50%',
+        'bottom:24px',
+        'transform:translateX(-50%)',
+        'max-width:80vw',
+        'background:rgba(0,0,0,0.9)',
+        'color:#fff',
+        'padding:12px 16px',
+        'font:600 14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial',
+        'border-radius:12px',
+        'box-shadow:0 6px 20px rgba(0,0,0,.35)',
+        'z-index:2147483647',
+        'opacity:0',
+        'transition:opacity .25s ease',
+        'pointer-events:none',
+        'display:none'
+      ].join(';'));
+      document.body.appendChild(t);
+    }
+    t.textContent = String(msg || 'İşlem tamamlandı.');
+    t.style.display = 'block';
+    // force reflow for transition
+    void t.offsetHeight;
+    t.style.opacity = '1';
+    // Hide after ~3 seconds
+    setTimeout(function(){
+      try{
+        t.style.opacity = '0';
+        setTimeout(function(){ t.style.display='none'; }, 300);
+      }catch(_){}
+    }, 3000);
+  }catch(e){ /* no-op */ }
+}
+      t.textContent = String(msg || 'İşlem tamamlandı.');
+      t.classList.add('show');
+      setTimeout(function(){ try{ t.classList.remove('show'); t.style.display='none'; }catch(_){} }, 2200);
+      t.style.display='block';
+    }catch(e){ /* no-op */ }
+  }
+
+  // --- Öğretmen: Mesaj Gönder ---
+  window.sendTeacherMessage = function(){
+    try{
+      if(!window.currentDetailNum){ setAlert("Öğrenci seçili değil."); return; }
+      var ta = document.getElementById('teacherMsgText');
+      var text = (ta && ta.value) ? ta.value.trim() : "";
+      if(!text){ setAlert("Mesaj boş olamaz."); return; }
+      var payload = {
+        text: text,
+        from: window.currentTeacherName || "",
+        teacherId: window.currentTeacherId || "",
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      };
+      db.ref("students/"+window.currentDetailNum+"/message").set(payload).then(function(){
+        if(ta) ta.value="";
+        showTeacherToast("Mesaj öğrenciye gönderildi.");
+      }).catch(function(e){
+        setAlert("Mesaj gönderilemedi: " + e.message);
+      });
+    }catch(err){
+      try{ setAlert("Hata: " + err.message); }catch(_){}
+    }
+  };
+
+  // --- Öğrenci: Mesaj Dinleyici + Silme ---
+  var __studentMsgRef = null;
+
+  function setupStudentMessageListener(){
+    try{
+      teardownStudentMessageListener();
+      if(!window.currentStudent) return;
+      __studentMsgRef = db.ref("students/"+window.currentStudent+"/message");
+      __studentMsgRef.on("value", function(snap){
+        try{
+          if(snap && snap.exists()){
+            var v = snap.val() || {};
+            var txt = (v.text || "").toString();
+            var from = v.from || "Öğretmeniniz";
+            var at = v.createdAt ? new Date(v.createdAt) : null;
+
+            var fromText = from;
+            if(at && !isNaN(at)) fromText += " • " + at.toLocaleString("tr-TR");
+
+            var ov = document.getElementById("studentMsgOverlay");
+            var box = document.getElementById("studentMsgBox");
+            var fromEl = document.getElementById("studentMsgFrom");
+            var contentEl = document.getElementById("studentMsgContent");
+
+            if(fromEl) fromEl.textContent = fromText;
+            if(contentEl) contentEl.textContent = txt;
+
+            if(ov) ov.style.display = "block";
+            if(box) box.style.display = "block";
+          }else{
+            hideStudentMessageOverlay();
+          }
+        }catch(e){ /* no-op */ }
+      });
+    }catch(e){ /* no-op */ }
+  }
+  function teardownStudentMessageListener(){
+    try{
+      if(__studentMsgRef){ __studentMsgRef.off(); __studentMsgRef = null; }
+    }catch(_){}
+  }
+
+  window.hideStudentMessageOverlay = function(){
+    try{
+      var ov = document.getElementById("studentMsgOverlay");
+      var box = document.getElementById("studentMsgBox");
+      if(ov) ov.style.display = "none";
+      if(box) box.style.display = "none";
+    }catch(_){}
+  };
+
+  window.deleteStudentMessage = function(){
+    try{
+      if(!window.currentStudent){ hideStudentMessageOverlay(); return; }
+      db.ref("students/"+window.currentStudent+"/message").remove()
+        .then(function(){ hideStudentMessageOverlay(); })
+        .catch(function(e){ setAlert("Silinemedi: " + e.message); });
+    }catch(e){ try{ setAlert("Silinemedi: " + e.message); }catch(_){ } }
+  };
+
+  // --- Mevcut fonksiyonları sarmala: öğrenci girince dinleyici açılsın, çıkışta kapansın ---
+  (function(){
+    if(typeof window.enterAsStudent === "function"){
+      var _origEnter = window.enterAsStudent;
+      window.enterAsStudent = function(){
+        var r = _origEnter.apply(this, arguments);
+        try{ setupStudentMessageListener(); }catch(_){}
+        return r;
+      };
+    }
+    if(typeof window.logout === "function"){
+      var _origLogout = window.logout;
+      window.logout = function(){
+        try{ teardownStudentMessageListener(); hideStudentMessageOverlay(); }catch(_){}
+        return _origLogout.apply(this, arguments);
+      };
+    }
+  })();
+
+  // Güvenlik: role seçimi ekranından "Öğrenci Girişi"ne geçildiğinde de tetiklensin (bazı akışlarda gerekebilir)
+  document.addEventListener("DOMContentLoaded", function(){
+    try{
+      // Eğer oturum zaten bir öğrenci üzerinde ise (beni hatırla senaryosu), dinleyiciyi aç
+      if(window.currentStudent){ setupStudentMessageListener(); }
+    }catch(_){}
+  });
+
+})();
+</script>
+<!-- === /TEACHER MESSAGE + STUDENT LISTENER INTEGRATION === -->
+
 </body>
 </html>
 
 <!-- ===== MOBILE REDE
-
-<script>
-/* === Weekly header ultimate fix: rewrite first row cells (thead or first tbody row) for mobile === */
-(function(){
-  var MAX_W = 700;
-  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= MAX_W; }
-  function lowerTR(s){ try{ return (s||'').toLocaleLowerCase('tr'); }catch(_){ return (s||'').toLowerCase(); } }
-  function norm(s){ return lowerTR((s||'').replace(/\s+/g,'').trim()); }
-  var DAY_ABBR = ["Drs","Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
-  var DAY_MAP = {"ders":"Drs","pazartesi":"Pzt","salı":"Sal","sali":"Sal","çarşamba":"Çar","carsamba":"Çar","perşembe":"Per","persembe":"Per","cuma":"Cum","cumartesi":"Cmt","pazar":"Paz","pzt":"Pzt","sal":"Sal","çar":"Çar","per":"Per","cum":"Cum","cmt":"Cmt","paz":"Paz"};
-  function enforceNoWrap(el){ el.style.whiteSpace="nowrap"; el.style.wordBreak="keep-all"; el.style.lineHeight="1.05"; el.querySelectorAll("*").forEach(function(n){ n.style.whiteSpace="nowrap"; n.style.wordBreak="keep-all"; n.style.lineHeight="1.05"; }); }
-  function shrinkToFit(el, minPx){ var cur=parseFloat(getComputedStyle(el).fontSize||"12"), min=Math.max(8,minPx||8), guard=24; while(el.scrollWidth>el.clientWidth+1 && cur>min && guard-- >0){ cur-=0.5; el.style.fontSize=cur+"px"; el.querySelectorAll("*").forEach(function(n){ n.style.fontSize=cur+"px"; }); } }
-  function rewriteHeaderRow(tbl){
-    var row=(tbl.tHead && tbl.tHead.rows[0]) || (tbl.tBodies[0] && tbl.tBodies[0].rows[0]) || tbl.querySelector("tr");
-    if(!row) return;
-    var cells = Array.from(row.children);
-    if(cells.length >= 8){
-      for(var i=0;i<8;i++){ var cel=cells[i]; if(!cel) continue; cel.textContent=DAY_ABBR[i]; enforceNoWrap(cel); shrinkToFit(cel,8); }
-    } else {
-      cells.forEach(function(cel){ var n=norm(cel.textContent); if(DAY_MAP[n]) cel.textContent = DAY_MAP[n]; enforceNoWrap(cel); shrinkToFit(cel,8); });
-    }
-  }
-  function run(){
-    if(!isSmall()) return;
-    ["#studentTab-week","#stuWeekMatrix","#weekMatrix"].forEach(function(sel){
-      var scope=document.querySelector(sel); if(!scope) return;
-      scope.querySelectorAll("table").forEach(rewriteHeaderRow);
-    });
-  }
-  if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded", function(){ run(); setTimeout(run,60); }); } else { run(); setTimeout(run,60); }
-  var to=null; window.addEventListener("resize", function(){ clearTimeout(to); to=setTimeout(run,120); });
-  var mo=new MutationObserver(function(){ run(); }); mo.observe(document.body,{childList:true,subtree:true,characterData:true});
-})();
-</script>
 <style>
 /* Parent role: hide the small "Öğrenci Paneli" label row under tabs */
 body[data-role="parent"] #studentTab-entry .student-toolbar > div:first-child{
