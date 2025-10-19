@@ -4107,7 +4107,40 @@ document.addEventListener('DOMContentLoaded', function(){
 </html>
 
 <!-- ===== MOBILE REDE
-<style>
+<
+<script>
+/* === Robust weekly header normalizer: force 'Drs' and day abbrs even if text is split across lines/spans === */
+(function(){
+  var MAX_W = 600;
+  function isSmall(){ return (window.innerWidth || document.documentElement.clientWidth) <= MAX_W; }
+  function lowerTR(s){ try{ return (s||'').toLocaleLowerCase('tr'); }catch(_){ return (s||'').toLowerCase(); } }
+  function norm(s){ return lowerTR((s||'').replace(/\s+/g,'').trim()); }
+  var DAY_ABBR = {"pazartesi":"Pzt","salı":"Sal","sali":"Sal","çarşamba":"Çar","carsamba":"Çar","perşembe":"Per","persembe":"Per","cuma":"Cum","cumartesi":"Cmt","pazar":"Paz"};
+  function run(){
+    if(!isSmall()) return;
+    var scopes = ['#studentTab-week','#stuWeekMatrix','#weekMatrix','body'];
+    for(var i=0;i<scopes.length;i++){
+      var scope = document.querySelector(scopes[i]);
+      if(!scope) continue;
+      scope.querySelectorAll('table thead th').forEach(function(th, idx){
+        var n = norm(th.textContent);
+        if(idx===0 || n==='ders'){ th.textContent = 'Drs'; }
+        if(DAY_ABBR[n]){ th.textContent = DAY_ABBR[n]; }
+        th.style.whiteSpace='nowrap'; th.style.wordBreak='keep-all'; th.style.lineHeight='1.05';
+        th.querySelectorAll('*').forEach(function(node){ node.style.whiteSpace='nowrap'; node.style.wordBreak='keep-all'; node.style.lineHeight='1.05'; });
+        var cur = parseFloat(getComputedStyle(th).fontSize || '12'), guard=16;
+        while(th.scrollWidth > th.clientWidth + 1 && cur > 8 && guard-- > 0){
+          cur -= 0.5; th.style.fontSize=cur+'px'; th.querySelectorAll('*').forEach(function(node){ node.style.fontSize=cur+'px'; });
+        }
+      });
+    }
+  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', function(){ run(); setTimeout(run,50); }); } else { run(); setTimeout(run,50); }
+  var to=null; window.addEventListener('resize', function(){ clearTimeout(to); to=setTimeout(run,120); });
+  var mo=new MutationObserver(function(){ run(); }); mo.observe(document.body,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+style>
 /* Parent role: hide the small "Öğrenci Paneli" label row under tabs */
 body[data-role="parent"] #studentTab-entry .student-toolbar > div:first-child{
   display: none !important;
