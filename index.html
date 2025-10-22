@@ -706,7 +706,106 @@ button.exitSmall .label{line-height:1}
 }
 .targetFloat:hover{ transform:translateY(-1px); }
 
-</style>
+
+/* === Gözlük animasyonlu "Öğrencileri Gör" butonu (metin yerine ikon) === */
+.classCard .classPick.glassesBtn{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:0; min-height:56px;
+  background: linear-gradient(90deg,var(--accent1),var(--accent2));
+  position:relative; overflow:hidden;
+}
+.classCard .classPick.glassesBtn:before{
+  /* subtle glossy sweep on hover */
+  content:""; position:absolute; inset:-40% -20% auto auto; width:40%; height:180%;
+  transform: rotate(25deg) translateX(120%);
+  background: linear-gradient(90deg, rgba(255,255,255,.0), rgba(255,255,255,.25), rgba(255,255,255,.0));
+  transition: transform .6s ease;
+  pointer-events:none;
+}
+.classCard .classPick.glassesBtn:hover:before{ transform: rotate(25deg) translateX(-40%); }
+
+/* Accessible hidden label */
+.classCard .classPick.glassesBtn .sr-only{ 
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* Glasses icon */
+.glassesIcon{ width:30px; height:30px; display:block; }
+.glassesIcon svg{ width:100%; height:100%; display:block; }
+
+/* Blink animation for the "eyes" (lenses) */
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.2); }
+  96% { transform: scaleY(1); }
+}
+
+/* Shine animation on the lenses */
+@keyframes shine {
+  0% { stroke-dashoffset: 24; opacity: .0; }
+  30% { opacity: .5; }
+  60% { opacity: .0; }
+  100% { stroke-dashoffset: -24; opacity: .0; }
+}
+
+.glassesIcon .lens{ transform-origin: 50% 50%; animation: blink 6s infinite ease-in-out; }
+.glassesIcon .shine{ stroke-dasharray: 24; stroke-dashoffset: 24; animation: shine 3.2s infinite ease-in-out; }
+
+
+/* === Warm navy→green gradient & hover animation === */
+.classCard .classPick.glassesBtn{
+  background: linear-gradient(90deg, #0e2a6f, #10a37f); /* lacivert → sıcak yeşil */
+  transition: background .25s ease, transform .2s ease;
+}
+.classCard .classPick.glassesBtn:hover{
+  background: linear-gradient(90deg, #12398d, #19c18f);
+}
+.glassesIcon{ width:40px; height:40px; transition: transform .2s ease; }
+.classCard .classPick.glassesBtn:hover .glassesIcon{ transform: scale(1.08); }
+
+
+/* === Mock'a uyum: kart & buton düzeni === */
+.classGrid{
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:18px;
+}
+
+.classCard{
+  background:#0f1b2b;           /* daha koyu kart */
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:16px 16px 20px;
+  box-shadow: 0 10px 24px rgba(6,14,30,.45), inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.classCard .className{
+  font-weight:800;
+  font-size:20px;
+  letter-spacing:.3px;
+  color:#ecf2ff;
+  margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+
+/* Çöp kutusu sağ üstte kalsın */
+.classCard .delFloat{
+  top:10px; right:10px;
+}
+
+/* İçteki gradient buton / panel */
+.classCard .classPick.glassesBtn{
+  border-radius:14px;
+  min-height:64px;
+  margin-top:6px;
+  background: linear-gradient(90deg, #0e2a6f 0%, #10a37f 100%);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 6px 18px rgba(9, 30, 66, .35);
+}
+
+.glassesIcon{ width:44px; height:44px; } /* ikon biraz daha büyük */
+.classCard .classPick.glassesBtn:hover .glassesIcon{ transform: scale(1.1); }
+
+</style></style>
 <style>
 /* --- Açılır Pencere (Rapor Modal) --- */
 #reportOverlay{position:fixed;inset:0;display:none;background:rgba(0,0,0,.45);z-index:9998;}
@@ -1123,6 +1222,95 @@ button.exitSmall .label{line-height:1}
 }
 </style>
 
+
+<style>
+/* === Reusable navy→green animated gradient with glossy sweep === */
+.animated-navy-green{
+  position: relative;
+  overflow: hidden;
+  color:#fff;
+  border: 1px solid rgba(255,255,255,.06);
+  transition: background .25s ease;
+}
+/* default gradient */
+.pill.animated-navy-green,
+.action.animated-navy-green{
+  background: linear-gradient(90deg, #0e2a6f, #10a37f);
+}
+/* hover gradient */
+.pill.animated-navy-green:hover,
+.action.animated-navy-green:hover{
+  background: linear-gradient(90deg, #12398d, #19c18f);
+}
+
+/* glossy sweep */
+.animated-navy-green::before{
+  content:"";
+  position:absolute;
+  inset:-40% -20% auto auto;
+  width:40%; height:180%;
+  transform: rotate(25deg) translateX(120%);
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.25), rgba(255,255,255,0));
+  transition: transform .6s ease;
+  pointer-events:none;
+}
+.animated-navy-green:hover::before{
+  transform: rotate(25deg) translateX(-40%);
+}
+
+/* keep active pill glow if any */
+.pill.active.animated-navy-green{
+  box-shadow:0 0 0 3px rgba(16,185,129,.35);
+}
+</style>
+
+<style>
+/* === Red danger button variant for modal close === */
+.btn-danger{
+  position: relative;
+  overflow: hidden;
+  color:#fff;
+  border: 1px solid rgba(255,255,255,.06);
+  transition: background .2s ease, transform .05s ease;
+}
+.pill.btn-danger,
+.action.btn-danger{
+  background: linear-gradient(90deg, #b91c1c, #ef4444) !important; /* dark red -> red */
+}
+.pill.btn-danger:hover,
+.action.btn-danger:hover{
+  background: linear-gradient(90deg, #991b1b, #dc2626) !important;
+}
+.pill.btn-danger:active,
+.action.btn-danger:active{
+  transform: translateY(1px);
+}
+</style>
+
+<style id="grid4-compact-override">
+/* === Force 4 class cards per row on all breakpoints; compact sizing === */
+#classGrid.classGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap:10px !important;
+}
+
+/* Compact card look specifically in the class grid */
+#classGrid .classCard{
+  padding:10px 10px 32px !important;
+  border-radius:12px !important;
+}
+#classGrid .className{
+  font-size: clamp(12px, 2.8vw, 16px) !important;
+  margin-bottom:6px !important;
+}
+#classGrid .classPick{
+  padding:8px 10px !important;
+  min-height:36px !important;
+  border-radius:10px !important;
+}
+#classGrid .delFloat{ top:8px !important; right:8px !important; }
+</style>
 </head>
 <style>
 /* ===== Ders Hedefleri (Goals Page) — Modern görünüm ===== */
@@ -1469,14 +1657,14 @@ button.exitSmall .label{line-height:1}
 <span class="label">Çıkış</span></button>
 </div>
 <div class="pillTabs" id="teacherTopTabs">
-<button class="pill active" id="tabClasses" onclick="showTeacherSection('classes')">Sınıflar</button>
-<button class="pill" id="tabFavorites" onclick="showTeacherSection('favorites')">Favorilerim</button>
+<button class="pill active animated-navy-green" id="tabClasses" onclick="showTeacherSection('classes')">Sınıflar</button>
+<button class="pill animated-navy-green" id="tabFavorites" onclick="showTeacherSection('favorites')">Favorilerim</button>
 </div>
 <!-- Sınıflar -->
 <div id="classesSection">
 <div class="row" style="margin-top:10px; margin-bottom:6px">
 <input autocomplete="off" class="grow" id="newClass" placeholder="örn: 8/A" type="text"/>
-<button class="action" onclick="addClass()" style="max-width:220px" type="button">Sınıf Ekle</button>
+<button class="action animated-navy-green" onclick="addClass()" style="max-width:220px" type="button">Sınıf Ekle</button>
 </div>
 <div class="classGrid" id="classGrid"></div>
 <div class="list" id="classStudents" style="display:none">
@@ -1501,7 +1689,7 @@ button.exitSmall .label{line-height:1}
 <button class="pill" id="repTabMessageBtn" onclick="showReportTab('message')">Öğretmen Mesajı</button>
 <button class="pill" id="repTabMonthlyBtn" onclick="showReportTab('monthly')">Aylık</button>
 </div>
-<button class="pill modalClose" onclick="closeReportModal()">Kapat ×</button>
+<button class="pill modalClose btn-danger" onclick="closeReportModal()">Kapat ×</button>
 </div>
 <div class="active" id="repTab-daily">
 <div class="sectionTitle" id="tsdTitle"></div>
@@ -2042,7 +2230,7 @@ function openTargetForCurrent(){
           const card=document.createElement("div"); card.className="classCard";
 
           const title=document.createElement("div"); title.className="className"; title.textContent=name;
-          const pick=document.createElement("button"); pick.className="classPick"; pick.textContent="Öğrencileri Gör";
+          const pick=document.createElement("button"); pick.className="classPick"; pick.classList.add("glassesBtn"); pick.innerHTML='<span class="glassesIcon" aria-hidden="true"><svg viewBox="0 0 64 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">  <defs>    <radialGradient id="lensHL" cx="50%" cy="35%" r="70%">      <stop offset="0%" stop-color="white" stop-opacity=".55"/>      <stop offset="60%" stop-color="white" stop-opacity=".10"/>      <stop offset="100%" stop-color="white" stop-opacity="0"/>    </radialGradient>  </defs>  <circle class="lens" cx="16" cy="12" r="8" fill="rgba(255,255,255,.08)"></circle>  <circle class="lens" cx="48" cy="12" r="8" fill="rgba(255,255,255,.08)"></circle>  <circle cx="16" cy="12" r="8" fill="url(#lensHL)" />  <circle cx="48" cy="12" r="8" fill="url(#lensHL)" />  <path d="M24 12h16" />  <path d="M2 10c2-6 10-8 14-6" />  <path d="M62 10c-2-6-10-8-14-6" />  <path class="shine" d="M10 8c4-2 8-2 12 0" stroke="white" opacity=".6"/>  <path class="shine" d="M42 8c4-2 8-2 12 0" stroke="white" opacity=".6"/></svg></span><span class="sr-only">Öğrencileri Gör</span>'; pick.setAttribute("title","Öğrencileri Gör");
           pick.onclick=()=>{
             activeClassName=name;
             document.querySelectorAll(".classPick").forEach(b=>b.classList.remove("active"));
@@ -4065,21 +4253,21 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Türkçe ayrılma hali (ablative) ekleyen yardımcı: "Emre Demirbaş’tan"
   function trAblativeSuffix(name){
-    var n=(name||"").trim();
-    if(!n) return "’dan";
-    // Sonda yer alan harf (Türkçe karakterleri de say)
-    var letters = n.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, "");
-    if(!letters) return "’dan";
-    var lastChar = letters.slice(-1).toLowerCase();
-    var vowels = (letters.match(/[aeıioöuü]/gi) || []);
-    var lastVowel = vowels.length ? vowels[vowels.length-1].toLowerCase() : 'a';
-    var unvoiced = "fstkçşhp";
-    var cons = unvoiced.indexOf(lastChar) >= 0 ? 't' : 'd';
-    var back = "aıou";
-    var vow = back.indexOf(lastVowel) >= 0 ? 'a' : 'e';
-    return "’" + cons + (vow==='a' ? 'an' : 'en');
-  }
-  function deriveTeacherName(){
+  // TDK: -(d/t)(a/e)n  -> 'dan/'den/'tan/'ten  (ASCII apostrophe)
+  var n = (name||"").trim();
+  if(!n) return "'dan";
+  // Keep only letters to detect last letter & last vowel
+  var letters = n.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, "");
+  if(!letters) return "'dan";
+  var lastChar = letters.slice(-1).toLowerCase();
+  var vowelsAll = letters.match(/[aeıioöuü]/gi) || [];
+  var lastVowel = vowelsAll.length ? vowelsAll[vowelsAll.length-1].toLowerCase() : 'a';
+  var unvoiced = "fstkçşhp"; // sert ünsüzler
+  var cons = unvoiced.indexOf(lastChar) >= 0 ? 't' : 'd';
+  var back = "aıou";
+  var vow = back.indexOf(lastVowel) >= 0 ? 'a' : 'e';
+  return "'" + cons + (vow==='a' ? 'an' : 'en');
+}function deriveTeacherName(){
     var n = (window.currentTeacherName||"").trim();
     if(!n){
       try{
