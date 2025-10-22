@@ -68,11 +68,12 @@
       border-radius:14px;
       padding:14px 14px 48px;
       transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+     display:flex; flex-direction:column; 
     }
     .classCard:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,.25); border-color:#3b4b6a; }
-    .className{ font-weight:900; font-size:20px; letter-spacing:.3px; margin-bottom:8px; }
+    .className{ font-weight:900; font-size:20px; letter-spacing:.3px; margin-bottom:8px; word-break:break-word; }
     .classPick{
-      position:absolute; left:14px; right:14px; bottom:14px;
+      position:static; width:100%; margin-top:auto;
       border:0; border-radius:10px; padding:10px 12px; cursor:pointer;
       color:#fff; font-weight:800;
       background:linear-gradient(90deg,var(--accent1),var(--accent2));
@@ -4123,59 +4124,128 @@ document.addEventListener('DOMContentLoaded', function(){
   };
 
   // Öğretmenden öğrenciye mesaj bırak
-  window.sendTeacherMessage = function(){
-    var ta = document.getElementById("teacherMsgText");
-    var s = (ta && ta.value || "").trim();
-    var sid = resolveSelectedStudentId();
-    if(!sid){ alert("Öğrenci seçili değil."); return; }
-    if(!s){ alert("Lütfen mesaj yazın."); return; }
-    var tname = deriveTeacherName();
-    var payload = { msg: s, teacher: tname, ts: Date.now() };
-    try { sessionStorage.setItem("studentMsg_" + sid, JSON.stringify(payload)); } catch(e){}
-    var st = document.getElementById("teacherMsgStatus");
-    if(st){ st.textContent = ""; }
-    showTeacherToast("Mesaj öğrenciye iletildi.");
-    if(ta) ta.value = "";
-  };
-
-  // Öğrenci panelinde mesajı göster
-  window.maybeShowStudentMessage = function(){
-    var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
-    if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
+  window.sendTeacherMessage = function()
+{
+  var ta = document.getElementById("teacherMsgText");
+  var s = (ta && ta.value || "").trim();
+  var sid = (function resolveSelectedStudentId(){
+    var root = document.getElementById("teacherStudentDetail");
+    var sid = root && root.dataset ? root.dataset.studentNum : "";
+    if(!sid && typeof currentDetailNum !== "undefined" && currentDetailNum!=null){ sid = String(currentDetailNum); }
+    if(!sid && typeof window.currentDetailNum !== "undefined" && window.currentDetailNum!=null){ sid = String(window.currentDetailNum); }
     if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
     if(!sid){
-      // Gerekirse sayfadaki başlıktan anla
-      var h = (document.getElementById("studentHeaderName")||{}).textContent || "";
-      var m = h && h.match(/\((\d+)\)/);
+      var t = (document.getElementById("tsdTitle")||{}).textContent || "";
+      var m = t.match(/\((\d+)\)/);
       if(m) sid = m[1];
     }
-    if(!sid) return;
-    var raw = null;
-    try { raw = sessionStorage.getItem("studentMsg_" + sid); } catch(e){}
-    if(!raw) return;
-    var data = null;
-    try { data = JSON.parse(raw); } catch(e){}
-    if(!data || !data.msg) return;
-    var ov = document.getElementById("studentMsgOverlay");
-    var fromEl = document.getElementById("studentMsgFrom");
-    var mEl = document.getElementById("studentMsgContent");
-    var teacherName = (data.teacher || deriveTeacherName());
-    var intro = teacherName + trAblativeSuffix(teacherName) + " sana mesaj var!";
-    if(fromEl){ fromEl.textContent = intro; }
-    var msgText = data.msg || "";
-    if(msgText){ msgText = msgText.charAt(0).toUpperCase() + msgText.slice(1); }
-    if(mEl) mEl.textContent = msgText;
-    if(ov) ov.style.display = "block";
-  };
+    return sid || "";
+  })();
+  if(!sid){ alert("Öğrenci seçili değil."); return; }
+  if(!s){ alert("Lütfen mesaj yazın."); return; }
+  function deriveTeacherName(){
+    var n = (window.currentTeacherName||"").trim();
+    if(!n){
+      try{
+        var el=[].slice.call(document.querySelectorAll('body *')).find(function(x){ return /Hoş geldiniz,\s*/.test(x.textContent||''); });
+        if(el){
+          var m=(el.textContent||'').match(/Hoş geldiniz,\s*(.+)/);
+          if(m) n=m[1].trim();
+        }
+      }catch(e){}
+    }
+    n = n.replace(/\(\d+\)\s*$/, '').trim();
+    return n || "Öğretmen";
+  }
+  var tname = deriveTeacherName();
+  var payload = { msg: s, teacher: tname, ts: Date.now(), fromTeacherId: (typeof currentTeacherId!=="undefined" ? currentTeacherId : null) };
+  try{
+    if(typeof db === "undefined"){ throw new Error("Veritabanı bağlantısı yok (db)."); }
+    var ref = db.ref("students/"+sid+"/teacherMessage");
+    ref.set(payload).then(function(){
+      var st = document.getElementById("teacherMsgStatus"); if(st){ st.textContent=""; }
+      if(ta) ta.value = "";
+      if(typeof showTeacherToast === "function"){ showTeacherToast("Mesaj öğrenciye iletildi."); }
+    }).catch(function(e){
+      alert("Kayıt hatası: " + e.message);
+    });
+  }catch(e){
+    alert("Kayıt hatası: " + e.message);
+  }
+}
+;
 
-  window.closeStudentMsg = function(){
-    var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
-    if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
-    if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
-    try { if(sid) sessionStorage.removeItem("studentMsg_" + sid); } catch(e){}
+  // Öğrenci panelinde mesajı göster
+  window.maybeShowStudentMessage = function()
+{
+  var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
+  if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
+  if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
+  if(!sid){
+    var t = (document.getElementById("tsdTitle")||{}).textContent || "";
+    var m = t.match(/\((\d+)\)/);
+    if(m) sid = m[1];
+  }
+  if(!sid) return;
+  try{
+    if(typeof db === "undefined") return;
+    db.ref("students/"+sid+"/teacherMessage").get().then(function(snap){
+      if(!snap || !snap.exists()) return;
+      var data = snap.val() || {};
+      if(!data || !data.msg) return;
+      
+  function trAblativeSuffix(name){
+    var n=(name||"").trim();
+    if(!n) return "’dan";
+    var letters = n.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, "");
+    var last = letters ? letters.slice(-1) : 'n';
+    var vowels = "aıoueiöüAIOUEİÖÜ";
+    var back = "aıouAIOU";
+    var isVowel = vowels.indexOf(last) !== -1;
+    var cons = isVowel ? 'n' : last.toLowerCase();
+    var vow = back.indexOf(last) !== -1 ? 'a' : 'e';
+    return "’" + cons + (vow==='a' ? 'an' : 'en');
+  }
+
+      var ov = document.getElementById("studentMsgOverlay");
+      var fromEl = document.getElementById("studentMsgFrom");
+      var mEl = document.getElementById("studentMsgContent");
+      var teacherName = (data.teacher || (typeof deriveTeacherName==='function'? deriveTeacherName() : 'Öğretmen'));
+      var intro = teacherName + trAblativeSuffix(teacherName) + " sana mesaj var!";
+      if(fromEl){ fromEl.textContent = intro; }
+      var msgText = data.msg || "";
+      if(msgText){ msgText = msgText.charAt(0).toUpperCase() + msgText.slice(1); }
+      if(mEl) mEl.textContent = msgText;
+      if(ov) ov.style.display = "block";
+    });
+  }catch(e){}
+}
+;
+
+  window.closeStudentMsg = function()
+{
+  var sid = (typeof currentStudent !== "undefined" && currentStudent!=null) ? String(currentStudent) : "";
+  if(!sid && typeof window.currentStudent !== "undefined" && window.currentStudent!=null){ sid = String(window.currentStudent); }
+  if(!sid && typeof window._msgStudentNum !== "undefined" && window._msgStudentNum!=null){ sid = String(window._msgStudentNum); }
+  try{
+    if(typeof db !== "undefined" && sid){
+      db.ref("students/"+sid+"/teacherMessage").set(null).then(function(){
+        var ov = document.getElementById("studentMsgOverlay");
+        if(ov) ov.style.display = "none";
+      }).catch(function(){
+        var ov = document.getElementById("studentMsgOverlay");
+        if(ov) ov.style.display = "none";
+      });
+    }else{
+      var ov = document.getElementById("studentMsgOverlay");
+      if(ov) ov.style.display = "none";
+    }
+  }catch(_){
     var ov = document.getElementById("studentMsgOverlay");
     if(ov) ov.style.display = "none";
-  };
+  }
+}
+;
 
   // teacherShowStudent çalışınca hem görünen metni hem de güvenli öğrenci id bilgisini kaydet
   if (typeof window.teacherShowStudent === "function"){
@@ -4237,174 +4307,6 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
 </div>
-
-
-<!-- === TEACHER MESSAGE + STUDENT LISTENER INTEGRATION === -->
-<script>
-(function(){
-  // Toast helper for teacher
-  function showTeacherToast(msg){
-  try{
-    var t = document.getElementById('teacherToast');
-    if(!t){
-      t = document.createElement('div');
-      t.id = 'teacherToast';
-      // Inline, high-visibility styles to avoid CSS dependency
-      t.setAttribute('style',[
-        'position:fixed',
-        'left:50%',
-        'bottom:24px',
-        'transform:translateX(-50%)',
-        'max-width:80vw',
-        'background:rgba(0,0,0,0.9)',
-        'color:#fff',
-        'padding:12px 16px',
-        'font:600 14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial',
-        'border-radius:12px',
-        'box-shadow:0 6px 20px rgba(0,0,0,.35)',
-        'z-index:2147483647',
-        'opacity:0',
-        'transition:opacity .25s ease',
-        'pointer-events:none',
-        'display:none'
-      ].join(';'));
-      document.body.appendChild(t);
-    }
-    t.textContent = String(msg || 'İşlem tamamlandı.');
-    t.style.display = 'block';
-    // force reflow for transition
-    void t.offsetHeight;
-    t.style.opacity = '1';
-    // Hide after ~3 seconds
-    setTimeout(function(){
-      try{
-        t.style.opacity = '0';
-        setTimeout(function(){ t.style.display='none'; }, 300);
-      }catch(_){}
-    }, 3000);
-  }catch(e){ /* no-op */ }
-}
-      t.textContent = String(msg || 'İşlem tamamlandı.');
-      t.classList.add('show');
-      setTimeout(function(){ try{ t.classList.remove('show'); t.style.display='none'; }catch(_){} }, 2200);
-      t.style.display='block';
-    }catch(e){ /* no-op */ }
-  }
-
-  // --- Öğretmen: Mesaj Gönder ---
-  window.sendTeacherMessage = function(){
-    try{
-      if(!window.currentDetailNum){ setAlert("Öğrenci seçili değil."); return; }
-      var ta = document.getElementById('teacherMsgText');
-      var text = (ta && ta.value) ? ta.value.trim() : "";
-      if(!text){ setAlert("Mesaj boş olamaz."); return; }
-      var payload = {
-        text: text,
-        from: window.currentTeacherName || "",
-        teacherId: window.currentTeacherId || "",
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-      };
-      db.ref("students/"+window.currentDetailNum+"/message").set(payload).then(function(){
-        if(ta) ta.value="";
-        showTeacherToast("Mesaj öğrenciye gönderildi.");
-      }).catch(function(e){
-        setAlert("Mesaj gönderilemedi: " + e.message);
-      });
-    }catch(err){
-      try{ setAlert("Hata: " + err.message); }catch(_){}
-    }
-  };
-
-  // --- Öğrenci: Mesaj Dinleyici + Silme ---
-  var __studentMsgRef = null;
-
-  function setupStudentMessageListener(){
-    try{
-      teardownStudentMessageListener();
-      if(!window.currentStudent) return;
-      __studentMsgRef = db.ref("students/"+window.currentStudent+"/message");
-      __studentMsgRef.on("value", function(snap){
-        try{
-          if(snap && snap.exists()){
-            var v = snap.val() || {};
-            var txt = (v.text || "").toString();
-            var from = v.from || "Öğretmeniniz";
-            var at = v.createdAt ? new Date(v.createdAt) : null;
-
-            var fromText = from;
-            if(at && !isNaN(at)) fromText += " • " + at.toLocaleString("tr-TR");
-
-            var ov = document.getElementById("studentMsgOverlay");
-            var box = document.getElementById("studentMsgBox");
-            var fromEl = document.getElementById("studentMsgFrom");
-            var contentEl = document.getElementById("studentMsgContent");
-
-            if(fromEl) fromEl.textContent = fromText;
-            if(contentEl) contentEl.textContent = txt;
-
-            if(ov) ov.style.display = "block";
-            if(box) box.style.display = "block";
-          }else{
-            hideStudentMessageOverlay();
-          }
-        }catch(e){ /* no-op */ }
-      });
-    }catch(e){ /* no-op */ }
-  }
-  function teardownStudentMessageListener(){
-    try{
-      if(__studentMsgRef){ __studentMsgRef.off(); __studentMsgRef = null; }
-    }catch(_){}
-  }
-
-  window.hideStudentMessageOverlay = function(){
-    try{
-      var ov = document.getElementById("studentMsgOverlay");
-      var box = document.getElementById("studentMsgBox");
-      if(ov) ov.style.display = "none";
-      if(box) box.style.display = "none";
-    }catch(_){}
-  };
-
-  window.deleteStudentMessage = function(){
-    try{
-      if(!window.currentStudent){ hideStudentMessageOverlay(); return; }
-      db.ref("students/"+window.currentStudent+"/message").remove()
-        .then(function(){ hideStudentMessageOverlay(); })
-        .catch(function(e){ setAlert("Silinemedi: " + e.message); });
-    }catch(e){ try{ setAlert("Silinemedi: " + e.message); }catch(_){ } }
-  };
-
-  // --- Mevcut fonksiyonları sarmala: öğrenci girince dinleyici açılsın, çıkışta kapansın ---
-  (function(){
-    if(typeof window.enterAsStudent === "function"){
-      var _origEnter = window.enterAsStudent;
-      window.enterAsStudent = function(){
-        var r = _origEnter.apply(this, arguments);
-        try{ setupStudentMessageListener(); }catch(_){}
-        return r;
-      };
-    }
-    if(typeof window.logout === "function"){
-      var _origLogout = window.logout;
-      window.logout = function(){
-        try{ teardownStudentMessageListener(); hideStudentMessageOverlay(); }catch(_){}
-        return _origLogout.apply(this, arguments);
-      };
-    }
-  })();
-
-  // Güvenlik: role seçimi ekranından "Öğrenci Girişi"ne geçildiğinde de tetiklensin (bazı akışlarda gerekebilir)
-  document.addEventListener("DOMContentLoaded", function(){
-    try{
-      // Eğer oturum zaten bir öğrenci üzerinde ise (beni hatırla senaryosu), dinleyiciyi aç
-      if(window.currentStudent){ setupStudentMessageListener(); }
-    }catch(_){}
-  });
-
-})();
-</script>
-<!-- === /TEACHER MESSAGE + STUDENT LISTENER INTEGRATION === -->
 
 </body>
 </html>
