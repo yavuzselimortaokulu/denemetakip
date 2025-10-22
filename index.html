@@ -1287,29 +1287,45 @@ button.exitSmall .label{line-height:1}
 }
 </style>
 
-<style id="grid4-compact-override">
-/* === Force 4 class cards per row on all breakpoints; compact sizing === */
-#classGrid.classGrid{
-  display:grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap:10px !important;
+<style id="mobile-classes-patch">
+/* === Mobile Optimization Patch: Class Grid fits max per row without breaking layout === */
+@media (max-width: 1200px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; gap:16px !important; }
 }
-
-/* Compact card look specifically in the class grid */
-#classGrid .classCard{
-  padding:10px 10px 32px !important;
-  border-radius:12px !important;
+@media (max-width: 992px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
 }
-#classGrid .className{
-  font-size: clamp(12px, 2.8vw, 16px) !important;
-  margin-bottom:6px !important;
+@media (max-width: 820px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; }
+  .classCard{ padding:14px 14px 16px !important; border-radius:16px !important; }
+  .classCard .className{ font-size:18px !important; margin-bottom:10px !important; }
+  .classCard .classPick.glassesBtn{ min-height:56px !important; }
+  .glassesIcon{ width:38px !important; height:38px !important; }
 }
-#classGrid .classPick{
-  padding:8px 10px !important;
-  min-height:36px !important;
-  border-radius:10px !important;
+@media (max-width: 680px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; gap:14px !important; }
+  .classCard .className{ font-size:17px !important; }
+  .classCard .classPick.glassesBtn{ min-height:52px !important; }
+  .glassesIcon{ width:34px !important; height:34px !important; }
 }
-#classGrid .delFloat{ top:8px !important; right:8px !important; }
+@media (max-width: 520px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; gap:12px !important; }
+  .classCard{ padding:12px 12px 14px !important; }
+  .classCard .className{ font-size:16px !important; }
+  .classCard .classPick.glassesBtn{ min-height:48px !important; }
+  .glassesIcon{ width:30px !important; height:30px !important; }
+}
+@media (max-width: 420px){
+  .classGrid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; gap:10px !important; }
+  .classCard .className{ font-size:15px !important; }
+  .classCard .classPick.glassesBtn{ min-height:44px !important; }
+  .glassesIcon{ width:28px !important; height:28px !important; }
+}
+/* Ensure search row doesn't overflow */
+@media (max-width: 560px){
+  #classesSection .row{ flex-wrap: wrap; }
+  #classesSection .row .action{ max-width: 100% !important; }
+}
 </style>
 </head>
 <style>
