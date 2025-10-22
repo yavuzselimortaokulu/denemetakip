@@ -1286,6 +1286,31 @@ button.exitSmall .label{line-height:1}
   transform: translateY(1px);
 }
 </style>
+
+<style id="grid4-compact-override">
+/* === Force 4 class cards per row on all breakpoints; compact sizing === */
+#classGrid.classGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap:10px !important;
+}
+
+/* Compact card look specifically in the class grid */
+#classGrid .classCard{
+  padding:10px 10px 32px !important;
+  border-radius:12px !important;
+}
+#classGrid .className{
+  font-size: clamp(12px, 2.8vw, 16px) !important;
+  margin-bottom:6px !important;
+}
+#classGrid .classPick{
+  padding:8px 10px !important;
+  min-height:36px !important;
+  border-radius:10px !important;
+}
+#classGrid .delFloat{ top:8px !important; right:8px !important; }
+</style>
 </head>
 <style>
 /* ===== Ders Hedefleri (Goals Page) — Modern görünüm ===== */
